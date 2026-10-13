@@ -14,7 +14,7 @@ import browser
 import hosts
 from catalog import Catalog
 from movieinfo import MovieInfo
-from labels import movie_label, source_label, movie_year
+from labels import movie_label, source_label, movie_year, episode_metadata
 import subtitles as subtitle_loader
 from parser import BASE, categories, listing, detail, player_url, embed
 
@@ -50,7 +50,10 @@ def fill_info(item, data):
     if data.get('genres'):tag.setGenres(data['genres'])
     if data.get('duration'):tag.setDuration(int(data['duration']))
     if data.get('originaltitle'):tag.setOriginalTitle(data['originaltitle'])
-    tag.setMediaType('movie')
+    if data.get('tvshowtitle'):tag.setTvShowTitle(data['tvshowtitle'])
+    if data.get('season') is not None:tag.setSeason(int(data['season']))
+    if data.get('episode') is not None:tag.setEpisode(int(data['episode']))
+    tag.setMediaType(data.get('media_type','movie'))
     icon = data.get('icon') or APP_ICON
     item.setArt({'thumb':icon,'poster':icon,'fanart':data.get('fanart','')})
 
@@ -187,7 +190,7 @@ def play(p):
     item.setArt({'thumb': p.get('icon', ''), 'poster': p.get('icon', '')})
     title=data.get('title') or p.get('name','')
     if p.get('episode'):title='Епизод '+p['episode']+' — '+title
-    fill_info(item,dict(data,name=title))
+    fill_info(item,dict(episode_metadata(data,p.get('episode',''),host,p.get('url','')),name=title))
     progress = xbmcgui.DialogProgress()
     progress.create(APP_NAME, 'Зареждане на български субтитри…')
     try:

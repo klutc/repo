@@ -1,6 +1,6 @@
 """
     Plugin for ResolveURL
-    Handles vidsrc-embed.ru (ZenoPlay: /embed/movie/{tmdb}, /embed/tv/{tmdb}/{S}-{E}).
+    Handles vidsrc-embed.ru, vidsrc.sh, and vidsrcme.ru embed URLs.
     Separate from vidsrc.py (that one is api.vidsrc.top / play.vidsrc.top only).
 
     Chain without a browser (11 requests, 25.09.2026):
@@ -28,14 +28,16 @@ from resolveurl.resolver import ResolveUrl, ResolverError
 
 class VidSrcEmbedResolver(ResolveUrl):
     name = 'VidSrcEmbed'
-    domains = ['vidsrc-embed.ru', 'vidsrc.sh']
-    pattern = r'(?://|\.)(vidsrc-embed\.ru|vidsrc\.sh)/embed/((?:movie|tv)/[0-9a-zA-Z/_-]+)'
+    domains = ['vidsrc-embed.ru', 'vidsrc.sh', 'vidsrcme.ru']
+    # Filmi9 supplies VidSrcME in query form (/embed/tv?imdb=...&season=...);
+    # the resolver's request/session flow follows its redirect to vidsrc.sh.
+    pattern = r'(?://|\.)(vidsrc-embed\.ru|vidsrc\.sh|vidsrcme\.ru)/embed/((?:movie|tv)(?:/[0-9a-zA-Z/_-]+|\?[0-9a-zA-Z_?&=.%+-]+))'
 
     _UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
            '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
     _CO = 'https://cloudorchestranova.com'
     _T = 15
-    _CHALLENGE = re.compile(r'challenges\.cloudflare\.com|turnstile|cf-chl|captcha|Just a moment', re.I)
+    _CHALLENGE = re.compile(r'challenges\.cloudflare\.com|cf-chl-|cf-turnstile|captcha-gate|Just a moment', re.I)
 
     # imdb id from api.php (data.imdb_id) for the add-on's ListItem metadata, without changing the
     # resolve() contract: Window(10000) property. ZenoPlay clears it before resolve, reads and clears after.
@@ -76,7 +78,6 @@ class VidSrcEmbedResolver(ResolveUrl):
     def get_media_url(self, host, media_id):
         embed_url = self.get_url(host, media_id)
         co = self._CO
-        ref = {'Referer': co + '/', 'Origin': co}
 
         s = requests.Session()
         s.headers.update({'User-Agent': self._UA})
@@ -91,8 +92,11 @@ class VidSrcEmbedResolver(ResolveUrl):
         r = self._get(s, '2 vs_src', urllib_parse.urljoin(embed_url, m.group(1).replace('&amp;', '&')),
                       headers={'Referer': embed_url})
         src = urllib_parse.urljoin(embed_url, r.json().get('src') or '')
-        if 'cloudorchestranova.com' not in src:
-            raise ResolverError('VidSrcEmbed: vs_src.src is not cloudorchestranova: %s' % src[:100])
+        player_host = urllib_parse.urlparse(src).hostname or ''
+        if player_host not in ('cloudorchestranova.com', 'stellarconductornexus.com'):
+            raise ResolverError('VidSrcEmbed: vs_src.src is not a supported player: %s' % src[:100])
+        co = '%s://%s' % (urllib_parse.urlparse(src).scheme, player_host)
+        ref = {'Referer': co + '/', 'Origin': co}
         # 3 inner -> window.CFG
         r = self._get(s, '3 inner', src, headers={'Referer': embed_url})
         m = re.search(r'window\.CFG = (\{.*?\});?</script>', r.text)
@@ -110,12 +114,14 @@ class VidSrcEmbedResolver(ResolveUrl):
             raise ResolverError('VidSrcEmbed: CONFIG.turnstile is active - not bypassed')
         if conf.get('mediaType') == 'tv' and conf.get('streamBase'):
             api = conf['streamBase'] + '&season=%s&episode=%s&stream_urls' % (conf.get('season'), conf.get('episode'))
+            api_params = {'api_token': conf.get('apiToken', '')}
         else:
             api = conf.get('api')
+            api_params = {'api_token': conf.get('apiToken', '')}
         if not api:
             raise ResolverError('VidSrcEmbed: no api/streamBase in CONFIG')
         # 5 api.php -> encrypted stream_urls + wasm
-        r = self._get(s, '5 api', api, headers=dict(ref, Accept='application/json'))
+        r = self._get(s, '5 api', api, params=api_params, headers=dict(ref, Accept='application/json'))
         j = r.json()
         self._publish_imdb((j.get('data') or {}).get('imdb_id'))
         su = (j.get('data') or {}).get('stream_urls')
@@ -163,4 +169,8 @@ class VidSrcEmbedResolver(ResolveUrl):
         raise ResolverError('VidSrcEmbed: no stream host returned a #EXTM3U master (%d tried)' % len(urls))
 
     def get_url(self, host, media_id):
+        # Filmi9 lists VidsrcME; its embed redirects to the current vidsrc.sh
+        # mirror, where the same player API is available to native clients.
+        if host.lower() == 'vidsrcme.ru':
+            host = 'vidsrc.sh'
         return self._default_get_url(host, media_id, template='https://{host}/embed/{media_id}')

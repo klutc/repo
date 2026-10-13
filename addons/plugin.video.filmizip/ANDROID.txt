@@ -1,4 +1,5 @@
 Android TV resolver update:
+- Episode playback items carry the English series title, season and episode in Kodi's video metadata so subtitle add-ons can search automatically instead of relying on a Bulgarian stream filename.
 - Vsembed follows the public nested-player API, decodes its ChaCha20/WASM data with portable Python, obtains the stream-host token and selects a working HLS server. No browser or WASM runtime required.
 - When Vsembed does not provide subtitle tracks, the add-on searches OpenSubtitles for Bulgarian subtitles using the movie's IMDb ID.
 - Byse/FileMoon follows embed_frame_url, registers an ephemeral P-256 key with the site, completes the automatic computation check, and decrypts the returned playback data using the existing ResolveURL AES-GCM library. This may take up to four minutes on the first attempt; Cancel stops the check. Valid site-issued tokens are cached for repeat playback (up to ten minutes). No visual CAPTCHA is bypassed or automated.

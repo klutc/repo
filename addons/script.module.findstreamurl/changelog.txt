@@ -1,3 +1,6 @@
+2026.10.14.01
+- vidsrcembed.py: recognize vidsrcme.ru query-style movie and TV embed URLs used by Filmi9, follow its current player host, pass the stream API token, and avoid mistaking an inactive Turnstile mention for a challenge.
+
 2026.10.13.01
 - Package the tested local resolver snapshot for klutc Repo, including local ABS/Byse adjustments and license texts.
 

@@ -128,7 +128,7 @@ def resolve(wrapper, progress=None, timeout=55, page_url='', source='', episode=
         enable()
         connection.send('Page.navigate', dict(url=page_url or wrapper))
         last_click = 0
-        script = """(()=>{document.querySelector('.captcha-gate__play')?.click(); document.querySelector('.video-responsive .play')?.click(); try{if(typeof jwplayer==='function') jwplayer().play()}catch(e){}; return navigator.userAgent})()"""
+        script = """(()=>{const video=document.querySelector('video');if(video&&video.paused)video.play().catch(()=>{});else if(!video){const play=document.getElementById('bigPlay');if(play&&play.offsetParent)play.click();}document.querySelector('.captcha-gate__play')?.click();document.querySelector('.video-responsive .play')?.click();try{if(typeof jwplayer==='function')jwplayer().play()}catch(e){};return navigator.userAgent})()"""
         agent = ''
         if page_url:
             script = """(()=>{if(typeof jQuery==='function'&&document.querySelector('.pmovie__player')&&!window.__filmizipStarted){const source=SOURCE,episode=EPISODE;if(episode) document.querySelector('[data-tv_link=\"'+episode+'\"]')?.click();document.querySelector('[data-link=\"'+source+'\"]')?.click();document.querySelector('.video-responsive .play')?.click();window.__filmizipStarted=!!document.querySelector('.pmovie__player iframe');}document.querySelector('.captcha-gate__play')?.click();try{if(typeof jwplayer==='function')jwplayer().play()}catch(e){}return navigator.userAgent})()""".replace('SOURCE', json.dumps(source)).replace('EPISODE', json.dumps(episode))

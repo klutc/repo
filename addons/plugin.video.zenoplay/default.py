@@ -1,6 +1,8 @@
 import os
+import json
 import sys
 import traceback
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import parse_qsl, urlencode, urlsplit
 
 import requests
@@ -17,7 +19,7 @@ import bgplayer
 import subtitles as subtitle_loader
 from movieinfo import MovieInfo
 from labels import movie_label, source_label, movie_year, episode_metadata, bg_audio_label
-from parser import BASE, categories, listing, metadata, providers, search_url, catalogue_url
+from parser import BASE, categories, listing, metadata, is_bg_audio, providers, search_url, catalogue_url
 
 HANDLE = int(sys.argv[1])
 ROOT = sys.argv[0]
@@ -30,6 +32,50 @@ DIRECTORY_OK = True
 THUMBNAILS = False
 SESSION = requests.Session()
 SESSION.headers.update({'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36'})
+BG_AUDIO_CACHE = {}
+BG_AUDIO_CACHE_PATH = os.path.join(PROFILE, 'bg_audio_cache.json')
+
+
+def mark_bg_audio(items):
+    """Mark titles from any listing by reading and caching their genre chips."""
+    global BG_AUDIO_CACHE
+    if not BG_AUDIO_CACHE:
+        try:
+            with open(BG_AUDIO_CACHE_PATH, 'r', encoding='utf-8') as cache_file:
+                BG_AUDIO_CACHE = json.load(cache_file)
+        except (OSError, ValueError, TypeError):
+            BG_AUDIO_CACHE = {}
+
+    pending = [item for item in items
+               if not item.get('bg_audio') and item.get('url') not in BG_AUDIO_CACHE]
+
+    def read_membership(item):
+        response = SESSION.get(item['url'], headers={'Referer': BASE}, timeout=(8, 20))
+        response.raise_for_status()
+        response.encoding = 'utf-8'
+        return item['url'], is_bg_audio(response.text)
+
+    changed = False
+    if pending:
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            futures = [pool.submit(read_membership, item) for item in pending]
+            for future in as_completed(futures):
+                try:
+                    url, has_audio = future.result()
+                    BG_AUDIO_CACHE[url] = has_audio
+                    changed = True
+                except Exception as error:
+                    xbmc.log('ZenoPlay BG Audio lookup: ' + str(error), xbmc.LOGDEBUG)
+    if changed:
+        try:
+            os.makedirs(PROFILE, exist_ok=True)
+            with open(BG_AUDIO_CACHE_PATH, 'w', encoding='utf-8') as cache_file:
+                json.dump(BG_AUDIO_CACHE, cache_file, ensure_ascii=False)
+        except OSError as error:
+            xbmc.log('ZenoPlay BG Audio cache: ' + str(error), xbmc.LOGDEBUG)
+
+    for item in items:
+        item['bg_audio'] = item.get('bg_audio') or BG_AUDIO_CACHE.get(item.get('url'), False)
 
 
 def get(url):
@@ -113,10 +159,11 @@ def browse(url):
     xbmcplugin.setContent(HANDLE, 'tvshows' if '/tv-shows/' in url else 'movies')
     xbmcplugin.setProperty(HANDLE, 'ZenoPlayCatalog', 'true')
     items, next_page = listing(get(url), url)
+    mark_bg_audio(items)
     for item in items:
         add(item['name'], 'detail', item['url'], item)
     if next_page:
-        add('Следваща страница →', 'browse', next_page)
+        add('Следваща страница >>', 'browse', next_page)
     THUMBNAILS = True
     if not items:
         xbmcgui.Dialog().notification(APP_NAME, 'Няма намерени заглавия.', xbmcgui.NOTIFICATION_INFO)

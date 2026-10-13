@@ -71,7 +71,7 @@ def metadata(html, url):
     meta_text = meta.get_text(' ', strip=True) if meta else ''
     year_match = re.search(r'\b(19\d{2}|20\d{2})\b', meta_text)
     genre = []
-    bg_audio = bool(soup.select_one('a[href*="/genre/bg-audio/"]'))
+    bg_audio = is_bg_audio(html)
     for group in soup.select('.taxonomy-group'):
         label = group.select_one('.taxonomy-group-title, .taxonomy-label')
         if label and 'genre' not in label.get_text(' ', strip=True).lower():
@@ -113,6 +113,12 @@ def metadata(html, url):
                 rating=0, media_type=media_type, tmdb=tmdb, post_id=post_id, token=token,
                 season=season, episode=epno, episodes=episodes, bg_audio=bg_audio,
                 panel_type=panel.get('data-media-type', '') if panel else '')
+
+
+def is_bg_audio(html):
+    """Check the title's genre chips, not the site-wide navigation menu."""
+    soup = BeautifulSoup(html, 'html.parser')
+    return bool(soup.select_one('.taxonomy-group .genre-chip-row a[href*="/genre/bg-audio/"]'))
 
 
 def providers(data, session):

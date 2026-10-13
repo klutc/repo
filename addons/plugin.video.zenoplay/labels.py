@@ -18,7 +18,7 @@ def movie_label(name, year):
     return title if not year or title.endswith(suffix) else title+suffix
 
 def bg_audio_label(title, data):
-    return ('🇧🇬 ' if data.get('bg_audio') else '') + str(title or '').strip()
+    return ('[BG] ' if data.get('bg_audio') else '') + str(title or '').strip()
 
 
 def source_label(name, year, source):

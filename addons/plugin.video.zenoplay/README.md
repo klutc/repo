@@ -3,7 +3,9 @@
 BG Player is listed first and is resolved through its native HLS endpoint, so
 it does not need Chrome or another external browser on Android.
 
-Titles browsed from the “БГ Аудио” category are marked with a Bulgarian flag.
+Titles in the “БГ Аудио” genre are marked with the Kodi-safe `[BG]` prefix,
+including in other categories and search results. The next-page item uses `>>`
+so it remains readable in Kodi fonts without emoji support.
 
 Самостоятелна Kodi добавка за https://zenoplay.to/ (`plugin.video.zenoplay`). Показва каталозите с филми и сериали, жанровете, търсенето, страниците и епизодите. Използва официалните публични данни на страницата за постери, година, жанр, резюме и видеоизточници.
 

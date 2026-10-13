@@ -1,6 +1,8 @@
 """Vsembed's public player protocol, using only portable Python and HTTP."""
 import base64
+import difflib
 import json
+import math
 import re
 import struct
 import requests
@@ -74,6 +76,48 @@ def chacha20(key,encrypted):
     return bytes(out)
 
 
+def opensubtitle(session,data):
+    """Pick a Bulgarian OpenSubtitles file when the Vsembed API has no track."""
+    imdb=re.sub(r'^tt','',str(data.get('imdb_id') or '').lower())
+    if not imdb.isdigit():return ''
+    url='https://rest.opensubtitles.org/search/imdbid-'+imdb+'/sublanguageid-bul'
+    try:
+        response=session.get(url,headers={'X-User-Agent':'trailers.to-UA','Accept':'application/json'},timeout=(8,18))
+        response.raise_for_status();rows=response.json()
+    except (requests.RequestException,ValueError):return ''
+    if not isinstance(rows,list):return ''
+    release=str(data.get('file_name') or '').replace('\\','/').rsplit('/',1)[-1]
+    release=re.sub(r'\.[^.]+$','',release).lower()
+    candidates=[]
+    for row in rows:
+        if not isinstance(row,dict) or row.get('SubLanguageID')!='bul':continue
+        link=row.get('SubDownloadLink') or ''
+        if not link.startswith('https://') or '/filead/' not in link:continue
+        name=' '.join(str(row.get(key) or '') for key in ('SubFileName','MovieReleaseName')).lower()
+        match=difflib.SequenceMatcher(None,release,name).ratio() if release else 0
+        downloads=int(row.get('SubDownloadsCnt') or 0)
+        score=match*100+math.log1p(downloads)
+        candidates.append((score,link,str(row.get('SubEncoding') or 'UTF-8')))
+    if not candidates:return ''
+    _,link,encoding=max(candidates,key=lambda item:item[0])
+    return link+'|'+urlencode({'_encoding':encoding})
+
+
+def embedded_subtitle(data,base):
+    rows=data.get('default_subs') or (data.get('data') or {}).get('default_subs') or []
+    choices=[]
+    if isinstance(rows,dict):rows=[rows]
+    for row in rows:
+        if isinstance(row,str):row={'url':row}
+        if not isinstance(row,dict):continue
+        address=row.get('url') or row.get('file') or row.get('src')
+        if not isinstance(address,str) or not address.startswith(('http://','https://','/')):continue
+        language=str(row.get('label') or row.get('language') or row.get('lang') or '').lower()
+        score=3 if language in ('bg','bul','bulgarian','български') else 1 if row.get('default') else 0
+        choices.append((score,urljoin(base,address)))
+    return max(choices,key=lambda item:item[0])[1] if choices else ''
+
+
 def config(html,name):
     match=re.search(r'window\.'+name+r'\s*=\s*(\{[^\n]+?\})\s*;',html)
     if not match:raise ValueError('Vsembed не предоставя плейър за това видео.')
@@ -115,7 +159,8 @@ def resolve(session,url,referer,progress=None):
             address=stream.replace('__TOKEN__',token) if '__TOKEN__' in stream else stream+('&' if '?' in stream else '?')+urlencode({'token':token}) if token else stream
             r=session.get(address,headers={'Referer':player},timeout=(10,15));r.raise_for_status()
             if not r.text.lstrip().startswith('#EXTM3U'):continue
-            return play_url(session,r.url,player),''
+            subtitle=embedded_subtitle(data,player) or opensubtitle(session,data.get('data') or {})
+            return play_url(session,r.url,player),subtitle
         except (ValueError,requests.RequestException):
             continue
     raise ValueError('Видео сървърите на Vsembed са недостъпни. Опитайте отново по-късно.')

@@ -21,14 +21,14 @@ Workflow-ът Build and publish Kodi repository генерира каталог�
 
 | Добавка | Версия |
 | --- | --- |
-| Filmi9 by Klutc | 1.2.0 |
-| FilmiZip by Klutc | 1.3.0 |
+| Filmi9 by Klutc | 1.2.1 |
+| FilmiZip by Klutc | 1.3.1 |
 | Find Stream URL (зависимост) | 2026.10.13.01 |
 
 Видео добавките се намират в **Install from repository → klutc Repo → Video add-ons**.
 Find Stream URL се инсталира като зависимост от това хранилище; Requests, Beautiful Soup, Six и Kodi Six се получават от официалното хранилище на Kodi.
 
-На Android TV Vsembed, VOE, VIDM, PlayM и FMoon/Byse имат директни обработчици без Chrome. При FMoon/Byse първата автоматична проверка може да отнеме няколко минути. VOE предпочита MP4 на Android (променя се от настройките). Upbolt засега е блокиран от Cloudflare. Подробности и ограничения има в ANDROID.txt на всяка видео добавка.
+На Android TV Vsembed, VOE, VIDM, PlayM и FMoon/Byse имат директни обработчици без Chrome. Vsembed автоматично търси български субтитри в OpenSubtitles, когато плеърът не предостави такива. При FMoon/Byse първата автоматична проверка може да отнеме няколко минути. VOE предпочита MP4 на Android (променя се от настройките). Upbolt засега е блокиран от Cloudflare. Подробности и ограничения има в ANDROID.txt на всяка видео добавка.
 
 Иконите и прозорецът за информация са включени в пакетите. Автоматичният информационен панел след 20 секунди използва отделна промяна на Confluence и не се инсталира чрез тези ZIP пакети.
 

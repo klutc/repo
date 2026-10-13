@@ -1,5 +1,6 @@
 """Convert finite HLS WebVTT subtitle playlists into a local UTF-8 SRT."""
 import hashlib
+import gzip
 import os
 import re
 import html
@@ -33,12 +34,19 @@ def srt(blocks):
 def download(video, subtitle, directory, progress=None, timeout=55):
     address, headers = split_url(video)
     subaddress, subheaders = split_url(subtitle or '')
+    encoding = subheaders.pop('_encoding', 'utf-8')
     headers.update(subheaders)
     session = requests.Session()
     def get(url):
         response = session.get(url, headers=headers, timeout=(5,15))
         response.raise_for_status()
-        return response.content.decode('utf-8-sig')
+        content = response.content
+        if content.startswith(b'\x1f\x8b'):
+            content = gzip.decompress(content)
+        try:
+            return content.decode(encoding if url == subaddress else 'utf-8-sig').lstrip('\ufeff')
+        except (LookupError, UnicodeDecodeError):
+            return content.decode('utf-8-sig', errors='replace').lstrip('\ufeff')
     if not subaddress:
         if '.m3u8' not in address:
             return ''

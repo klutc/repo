@@ -308,7 +308,9 @@ except Exception as error:
 finally:
     if action not in ('play','info'):
         xbmcplugin.endOfDirectory(HANDLE,succeeded=DIRECTORY_OK)
-        if THUMBNAILS and xbmc.getSkinDir() == 'skin.confluence':
+        if action == 'search':
+            xbmc.executebuiltin('Container.SetViewMode(50)')
+        elif THUMBNAILS and xbmc.getSkinDir() == 'skin.confluence':
             xbmc.executebuiltin('Container.SetViewMode(500)')
         if AUTO_PLAY_URL and DIRECTORY_OK:
             xbmc.executebuiltin('PlayMedia(' + AUTO_PLAY_URL + ')')

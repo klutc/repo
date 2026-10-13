@@ -95,7 +95,7 @@ def browse(url):
     for movie in items:
         add(action='detail', **movie)
     if nextpage:
-        add('Следваща страница →', 'browse', nextpage)
+        add('Следваща страница >>', 'browse', nextpage)
     THUMBNAILS = True
     if not items:
         xbmcgui.Dialog().notification(APP_NAME, 'Няма намерени заглавия.', xbmcgui.NOTIFICATION_INFO)

@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import sys
 import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -19,7 +20,7 @@ import bgplayer
 import subtitles as subtitle_loader
 from movieinfo import MovieInfo
 from labels import movie_label, source_label, movie_year, episode_metadata, bg_audio_label
-from parser import BASE, categories, listing, metadata, is_bg_audio, providers, search_url, catalogue_url
+from parser import BASE, categories, listing, collection_listing, metadata, is_bg_audio, providers, search_url, catalogue_url
 
 HANDLE = int(sys.argv[1])
 ROOT = sys.argv[0]
@@ -156,6 +157,21 @@ def fetch_detail(url):
 
 def browse(url):
     global THUMBNAILS
+    path = urlsplit(url).path.rstrip('/')
+    is_collection_index = path == '/collections' or bool(re.fullmatch(r'/collections/page/\d+', path))
+    if is_collection_index:
+        xbmcplugin.setContent(HANDLE, 'files')
+        xbmcplugin.setProperty(HANDLE, 'ZenoPlayCatalog', 'false')
+        collection_rows, next_page = collection_listing(get(url), url)
+        for label, target in collection_rows:
+            add(label, 'browse', target)
+        if next_page:
+            add('Следваща страница >>', 'browse', next_page)
+        THUMBNAILS = False
+        if not collection_rows:
+            xbmcgui.Dialog().notification(APP_NAME, 'Няма намерени колекции.', xbmcgui.NOTIFICATION_INFO)
+        return
+
     xbmcplugin.setContent(HANDLE, 'tvshows' if '/tv-shows/' in url else 'movies')
     xbmcplugin.setProperty(HANDLE, 'ZenoPlayCatalog', 'true')
     items, next_page = listing(get(url), url)

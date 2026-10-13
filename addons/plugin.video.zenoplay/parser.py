@@ -48,6 +48,24 @@ def listing(html, url):
     return rows, urljoin(url, next_link['href']) if next_link else ''
 
 
+def collection_listing(html, url):
+    """Parse the collections index, whose entries are folders, not movie cards."""
+    soup = BeautifulSoup(html, 'html.parser')
+    rows, seen = [], set()
+    for card in soup.select('a.collection-card[href]'):
+        href = urljoin(url, card['href'])
+        if href in seen:
+            continue
+        seen.add(href)
+        label = card.get_text(' ', strip=True)
+        label = re.sub(r'^[^\wА-Яа-я]+', '', label).strip()
+        label = re.sub(r'\s*(\d+)\s+заглавия\s*$', r' (\1 заглавия)', label, flags=re.I)
+        if label:
+            rows.append((label, href))
+    next_link = soup.select_one('a.next[href], a[rel="next"][href], .pagination a[aria-label*="Next"][href]')
+    return rows, urljoin(url, next_link['href']) if next_link else ''
+
+
 def metadata(html, url):
     soup = BeautifulSoup(html, 'html.parser')
     title_node = soup.select_one('.detail-info h1, .detail-title, h1')

@@ -13,6 +13,7 @@ import resolveurl
 import native_resolver
 import browser
 import hosts
+import bgplayer
 import subtitles as subtitle_loader
 from movieinfo import MovieInfo
 from labels import movie_label, source_label, movie_year, episode_metadata
@@ -138,6 +139,8 @@ def show(data, name):
 def resolve(source, page_url, source_name, episode=''):
     SESSION.headers['Referer'] = page_url
     host = urlsplit(source).hostname or ''
+    if host.lower().removeprefix('www.') in ('galaxicon.org', 'playtube.tv', 'rollo.uno'):
+        return bgplayer.resolve(SESSION, source, page_url)
     if urlsplit(source).path.lower().endswith(('.m3u8', '.mp4', '/master.txt')):
         return source + '|' + urlencode({'User-Agent': SESSION.headers['User-Agent'], 'Referer': page_url}), ''
     if host in ('playmate.to', 'www.playmate.to'):

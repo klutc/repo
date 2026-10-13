@@ -142,6 +142,9 @@ def providers(data, session):
             continue
         seen.add(address)
         result.append((address, str(row.get('name') or row.get('title') or urlsplit(address).hostname or 'Източник')))
+    # BG Player is the preferred source and should stay at the top for both
+    # movies and episodes. Keep the site's relative order for every other host.
+    result.sort(key=lambda row: (row[1].strip().casefold() != 'bg player',))
     return result
 
 

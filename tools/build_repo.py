@@ -57,16 +57,28 @@ def build():
     (OUT / "addons.xml").write_bytes(payload)
     (OUT / "addons.xml.md5").write_text(hashlib.md5(payload).hexdigest(), encoding="ascii")
     (OUT / ".nojekyll").touch()
-    (OUT / "index.html").write_text(
-        '<!doctype html><html lang="bg"><meta charset="utf-8">'
-        '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        '<title>klutc Repo</title><style>body{font:18px system-ui;max-width:760px;margin:60px auto;padding:0 24px;line-height:1.6}a{color:#1769aa}</style>'
-        '<h1>klutc Repo</h1><p>Изтегли repository.klutc ZIP и го инсталирай в Kodi чрез '
-        'Add-ons → Install from zip file. След това отвори Install from repository → klutc Repo.</p>'
-        '<p>Поддържа Kodi 20 и по-нови версии. Съдържа Filmi9 by Klutc, FilmiZip by Klutc и необходимия Find Stream URL модул.</p>'
-        '<ul>' + "".join(links) + '</ul><p><a href="https://github.com/klutc/repo">GitHub</a></p></html>',
-        encoding="utf-8",
-    )
+    # Put the repository installer ZIP at the web root and use an Apache-style
+    # directory index. Kodi's file browser can parse this listing, while it
+    # does not treat a custom landing page as a browsable directory.
+    repo_id = "repository.klutc"
+    repo_xml = ET.parse(ROOT / "addons" / repo_id / "addon.xml").getroot()
+    repo_version = repo_xml.attrib["version"]
+    repo_zip_name = f"{repo_id}-{repo_version}.zip"
+    shutil.copy2(OUT / repo_id / repo_zip_name, OUT / repo_zip_name)
+    listing = [
+        '<!doctype html><html><head><meta charset="utf-8"><title>Index of /repo/</title></head><body>',
+        '<h1>Index of /repo/</h1><pre>',
+        '<a href="../">Parent Directory</a>',
+    ]
+    for path in sorted(OUT.iterdir(), key=lambda item: item.name.lower()):
+        if path.name == "index.html":
+            continue
+        name = path.name + ("/" if path.is_dir() else "")
+        href = html.escape(name, quote=True)
+        label = html.escape(name)
+        listing.append(f'<a href="{href}">{label}</a>')
+    listing.append('</pre></body></html>')
+    (OUT / "index.html").write_text("\n".join(listing), encoding="utf-8")
     print(f"Built {len(links)} add-on(s) in {OUT}")
 
 if __name__ == "__main__":

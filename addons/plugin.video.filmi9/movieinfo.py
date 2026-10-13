@@ -5,6 +5,7 @@ class MovieInfo(xbmcgui.WindowXMLDialog):
     def __init__(self, *args, **kwargs):
         self.movie = kwargs.pop('movie')
         self.allow_sources = kwargs.pop('allow_sources', True)
+        self.action_label = kwargs.pop('action_label', 'Пусни филма')
         self.proceed = False
 
     def onInit(self):
@@ -14,7 +15,7 @@ class MovieInfo(xbmcgui.WindowXMLDialog):
         self.getControl(103).setLabel('Година: ' + (str(data['year']) if data.get('year') else '—'))
         self.getControl(104).setLabel('Жанр: ' + (' / '.join(data.get('genres',[])) or '—'))
         self.getControl(105).setText(data.get('plot') or 'Няма налично резюме.')
-        self.getControl(10).setLabel('Видеоизточници' if self.allow_sources else 'Затвори')
+        self.getControl(10).setLabel(self.action_label if self.allow_sources else 'Затвори')
 
     def onClick(self, controlId):
         if controlId in (10,11):

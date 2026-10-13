@@ -31,6 +31,7 @@ PROFILE = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
 APP_ICON = os.path.join(ADDON_PATH, 'resources', 'icon.png')
 DIRECTORY_OK = True
 THUMBNAILS = False
+AUTO_PLAY_URL = ''
 SESSION = requests.Session()
 SESSION.headers.update({'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36'})
 RETURN_URL_PROPERTY = 'Klutc.ZenoPlay.ReturnUrl'
@@ -148,12 +149,15 @@ def add(name, action, url='', data=None, source='', source_name='', **extra):
         item.setProperty('ZenoPlayMovie', 'true')
         context = ROOT + '?' + urlencode(dict(action='info', url=url, name=name))
         item.addContextMenuItems([('Media Info', 'RunPlugin(' + context + ')')])
-    xbmcplugin.addDirectoryItem(HANDLE, ROOT + '?' + urlencode(params), item, action != 'play')
+    item_url = ROOT + '?' + urlencode(params)
+    xbmcplugin.addDirectoryItem(HANDLE, item_url, item, action != 'play')
+    return item_url
 
 
-def info_dialog(data, name, allow_sources=True):
+def info_dialog(data, name, allow_sources=True, action_label='Пусни филма'):
     data = dict(data, name=name)
-    dialog = MovieInfo('ZenoPlayInfo.xml', ADDON_PATH, 'Default', '720p', movie=data, allow_sources=allow_sources)
+    dialog = MovieInfo('ZenoPlayInfo.xml', ADDON_PATH, 'Default', '720p', movie=data,
+                       allow_sources=allow_sources, action_label=action_label)
     dialog.doModal()
     proceed = dialog.proceed
     del dialog
@@ -194,8 +198,8 @@ def browse(url):
         xbmcgui.Dialog().notification(APP_NAME, 'Няма намерени заглавия.', xbmcgui.NOTIFICATION_INFO)
 
 
-def show(data, name):
-    global DIRECTORY_OK
+def show(data, name, auto_play=False):
+    global DIRECTORY_OK, AUTO_PLAY_URL
     if data['media_type'] == 'tvshow':
         if not data['episodes']:
             raise ValueError('Не са намерени епизоди за този сериал.')
@@ -207,8 +211,13 @@ def show(data, name):
     if not sources:
         raise ValueError('ZenoPlay не върна активни видеоизточници за това заглавие.')
     xbmcplugin.setContent(HANDLE, 'files')
+    first_play_url = ''
     for address, label in sources:
-        add(name, 'play', data['url'], data, source=address, source_name=label)
+        item_url = add(name, 'play', data['url'], data, source=address, source_name=label)
+        if not first_play_url:
+            first_play_url = item_url
+    if auto_play:
+        AUTO_PLAY_URL = first_play_url
 
 
 def resolve(source, page_url, source_name, episode=''):
@@ -313,10 +322,21 @@ try:
             data['season'] = int(p.get('season') or data.get('season') or 0) or None
             data['episode'] = int(p.get('episode') or data.get('episode') or 0) or None
         returned_from_playback = consume_playback_return(p['url'])
-        if not returned_from_playback and not info_dialog(data, name):
-            DIRECTORY_OK = False
-        else:
-            show(data, name)
+        auto_play = False
+        if not returned_from_playback:
+            if action == 'episode':
+                action_label = 'Пусни епизода'
+                auto_play = True
+            elif data['media_type'] == 'tvshow':
+                action_label = 'Епизоди'
+            else:
+                action_label = 'Пусни филма'
+                auto_play = True
+            if not info_dialog(data, name, action_label=action_label):
+                DIRECTORY_OK = False
+                auto_play = False
+        if DIRECTORY_OK:
+            show(data, name, auto_play=auto_play)
     elif action == 'info':
         info_dialog(fetch_detail(p['url']), p.get('name', ''), allow_sources=False)
     elif action == 'play':
@@ -331,3 +351,5 @@ finally:
         xbmcplugin.endOfDirectory(HANDLE, succeeded=DIRECTORY_OK)
         if THUMBNAILS and xbmc.getSkinDir() == 'skin.confluence':
             xbmc.executebuiltin('Container.SetViewMode(500)')
+        if AUTO_PLAY_URL and DIRECTORY_OK:
+            xbmc.executebuiltin('PlayMedia(' + AUTO_PLAY_URL + ')')

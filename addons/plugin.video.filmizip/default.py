@@ -27,6 +27,7 @@ PROFILE = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
 APP_ICON = os.path.join(ADDON_PATH,'resources','icon.png')
 DIRECTORY_OK = True
 THUMBNAILS = False
+AUTO_PLAY_URL = ''
 SESSION = requests.Session()
 SESSION.headers.update({'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36'})
 RETURN_URL_PROPERTY = 'Klutc.FilmiZip.ReturnUrl'
@@ -80,7 +81,9 @@ def add(name, action, url='', icon='', plot='', year=0, genres=None, fanart='', 
         item.setProperty('FilmiZipMovie','true')
         context = ROOT + '?' + urlencode(dict(action='info',url=url,name=name))
         item.addContextMenuItems([('Media Info','RunPlugin(' + context + ')')])
-    xbmcplugin.addDirectoryItem(HANDLE, ROOT + '?' + urlencode(params), item, action != 'play')
+    item_url = ROOT + '?' + urlencode(params)
+    xbmcplugin.addDirectoryItem(HANDLE, item_url, item, action != 'play')
+    return item_url
 
 
 def catalog():
@@ -110,10 +113,10 @@ def browse(url):
         xbmcgui.Dialog().notification(APP_NAME, 'Няма намерени заглавия.', xbmcgui.NOTIFICATION_INFO)
 
 
-def info_dialog(data, name, allow_sources=True):
+def info_dialog(data, name, allow_sources=True, action_label='Пусни филма'):
     data=dict(data,name=name)
     data['year']=movie_year(data)
-    dialog=MovieInfo('FilmiZipInfo.xml',ADDON_PATH,'Default','720p',movie=data,allow_sources=allow_sources)
+    dialog=MovieInfo('FilmiZipInfo.xml',ADDON_PATH,'Default','720p',movie=data,allow_sources=allow_sources,action_label=action_label)
     dialog.doModal()
     proceed=dialog.proceed
     del dialog
@@ -125,9 +128,14 @@ def show(p):
     data = detail(get(p['url']), p['url'])
     catalog().write(p['url'],{key:data[key] for key in ('plot','icon','year','genres','fanart','duration','title','originaltitle')})
     returned_from_playback = consume_playback_return(p['url'])
-    if not p.get('episode') and not returned_from_playback and not info_dialog(data,p.get('name') or data['title']):
-        DIRECTORY_OK=False
-        return
+    auto_play = False
+    if not p.get('episode') and not returned_from_playback:
+        has_episodes = bool(data['episodes'])
+        action_label = 'Епизоди' if has_episodes else 'Пусни филма'
+        if not info_dialog(data, p.get('name') or data['title'], action_label=action_label):
+            DIRECTORY_OK = False
+            return
+        auto_play = not has_episodes
     xbmcplugin.setContent(HANDLE,'files')
     common={key:data[key] for key in ('plot','icon','year','genres','fanart','duration','originaltitle')}
     if data['episodes'] and not p.get('episode'):
@@ -141,8 +149,14 @@ def show(p):
             sources = [('video' + source, name) for source, name in zip(row[1], row[2]) if source]
     if not sources:
         raise ValueError('Няма налични видеоизточници.')
+    first_play_url = ''
     for source, label in sources:
-        add(p.get('name') or data.get('title',''), 'play', p['url'], source=source, source_name=label, episode=p.get('episode', ''), **common)
+        item_url = add(p.get('name') or data.get('title',''), 'play', p['url'], source=source, source_name=label, episode=p.get('episode', ''), **common)
+        if not first_play_url:
+            first_play_url = item_url
+    if auto_play:
+        global AUTO_PLAY_URL
+        AUTO_PLAY_URL = first_play_url
 
 
 def play(p):
@@ -251,3 +265,5 @@ finally:
         xbmcplugin.endOfDirectory(HANDLE,succeeded=DIRECTORY_OK)
         if THUMBNAILS and xbmc.getSkinDir() == 'skin.confluence':
             xbmc.executebuiltin('Container.SetViewMode(500)')
+        if AUTO_PLAY_URL and DIRECTORY_OK:
+            xbmc.executebuiltin('PlayMedia(' + AUTO_PLAY_URL + ')')

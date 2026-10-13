@@ -23,6 +23,8 @@ def categories(html):
 
 def listing(html, url):
     soup = BeautifulSoup(html, 'html.parser')
+    category_path = urlsplit(url).path.lower()
+    bg_audio = category_path.startswith('/genre/bg-audio/')
     rows, seen = [], set()
     for card in soup.select('a.media-card[href]'):
         href = urljoin(url, card.get('href', ''))
@@ -40,6 +42,7 @@ def listing(html, url):
         rows.append(dict(name=title_text, title=title_text, url=href,
                          icon=urljoin(url, (image.get('data-src') or image.get('src', ''))) if image else '',
                          year=int(match[1]) if match else 0, plot='', genres=[],
+                         bg_audio=bg_audio,
                          media_type='tvshow' if kind and 'tv' in kind.get_text(' ', strip=True).lower() else 'movie'))
     next_link = soup.select_one('a.next[href], a[rel="next"][href], .pagination a[aria-label*="Next"][href]')
     return rows, urljoin(url, next_link['href']) if next_link else ''
@@ -68,6 +71,7 @@ def metadata(html, url):
     meta_text = meta.get_text(' ', strip=True) if meta else ''
     year_match = re.search(r'\b(19\d{2}|20\d{2})\b', meta_text)
     genre = []
+    bg_audio = bool(soup.select_one('a[href*="/genre/bg-audio/"]'))
     for group in soup.select('.taxonomy-group'):
         label = group.select_one('.taxonomy-group-title, .taxonomy-label')
         if label and 'genre' not in label.get_text(' ', strip=True).lower():
@@ -107,7 +111,8 @@ def metadata(html, url):
                 icon=icon, year=int(year_match[1]) if year_match else 0, genres=genre,
                 fanart='', originaltitle=original or show_title or name, imdb=imdb,
                 rating=0, media_type=media_type, tmdb=tmdb, post_id=post_id, token=token,
-                season=season, episode=epno, episodes=episodes, panel_type=panel.get('data-media-type', '') if panel else '')
+                season=season, episode=epno, episodes=episodes, bg_audio=bg_audio,
+                panel_type=panel.get('data-media-type', '') if panel else '')
 
 
 def providers(data, session):

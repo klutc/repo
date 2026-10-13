@@ -3,6 +3,8 @@
 BG Player is listed first and is resolved through its native HLS endpoint, so
 it does not need Chrome or another external browser on Android.
 
+Titles browsed from the “БГ Аудио” category are marked with a Bulgarian flag.
+
 Самостоятелна Kodi добавка за https://zenoplay.to/ (`plugin.video.zenoplay`). Показва каталозите с филми и сериали, жанровете, търсенето, страниците и епизодите. Използва официалните публични данни на страницата за постери, година, жанр, резюме и видеоизточници.
 
 Всеки активен източник се показва отделно. За възпроизвеждането се използват наличните нативни resolver-и от Find Stream URL, с браузърен резервен вариант на Linux. Източниците, които сайтът и общите resolver-и поддържат без браузър, могат да работят и на Android TV. Kodi получава данните за оригинално заглавие, IMDb, сезон и епизод за автоматично търсене на субтитри.

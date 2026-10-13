@@ -16,7 +16,7 @@ import hosts
 import bgplayer
 import subtitles as subtitle_loader
 from movieinfo import MovieInfo
-from labels import movie_label, source_label, movie_year, episode_metadata
+from labels import movie_label, source_label, movie_year, episode_metadata, bg_audio_label
 from parser import BASE, categories, listing, metadata, providers, search_url, catalogue_url
 
 HANDLE = int(sys.argv[1])
@@ -46,7 +46,7 @@ def fill_info(item, data):
     data = dict(data, year=movie_year(data))
     title = data.get('name') or data.get('title', '')
     tag.setTitle(title)
-    item.setProperty('FilmDisplayTitle', movie_label(title, data.get('year', 0)))
+    item.setProperty('FilmDisplayTitle', bg_audio_label(movie_label(title, data.get('year', 0)), data))
     item.setProperty('FilmYear', str(data['year']) if data.get('year') else '—')
     tag.setPlot(data.get('plot', ''))
     if data.get('year'):
@@ -73,14 +73,17 @@ def fill_info(item, data):
 def add(name, action, url='', data=None, source='', source_name='', **extra):
     data = data or {}
     params = dict(action=action, url=url, name=name, source=source, episode=extra.get('episode', ''))
+    if data.get('bg_audio'):
+        params['bg_audio'] = '1'
     params.update(extra)
     year = movie_year(data)
-    label = source_label(name, year, source_name) if action == 'play' else movie_label(name, year) if action in ('detail', 'episode') else name
+    flagged_name = bg_audio_label(name, data)
+    label = source_label(flagged_name, year, source_name) if action == 'play' else movie_label(flagged_name, year) if action in ('detail', 'episode') else name
     item = xbmcgui.ListItem(label=label)
     item_data = dict(data, name=name)
     if action == 'episode':
         item_data.update(media_type='episode', season=extra.get('season'), episode=extra.get('episode'), tvshowtitle=data.get('originaltitle') or name)
-        label = 'S%02dE%02d — %s' % (int(extra.get('season') or 0), int(extra.get('episode') or 0), name)
+        label = 'S%02dE%02d — %s' % (int(extra.get('season') or 0), int(extra.get('episode') or 0), flagged_name)
         item.setLabel(label)
     fill_info(item, item_data)
     if action == 'play':
@@ -229,6 +232,7 @@ try:
             browse(search_url(query))
     elif action in ('detail', 'episode'):
         data = fetch_detail(p['url'])
+        data['bg_audio'] = data.get('bg_audio') or p.get('bg_audio') == '1'
         name = p.get('name') or data['name']
         if action == 'episode':
             data['season'] = int(p.get('season') or data.get('season') or 0) or None

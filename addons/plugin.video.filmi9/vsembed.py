@@ -80,7 +80,15 @@ def opensubtitle(session,data):
     """Pick a Bulgarian OpenSubtitles file when the Vsembed API has no track."""
     imdb=re.sub(r'^tt','',str(data.get('imdb_id') or '').lower())
     if not imdb.isdigit():return ''
-    url='https://rest.opensubtitles.org/search/imdbid-'+imdb+'/sublanguageid-bul'
+    season,episode=data.get('season'),data.get('episode')
+    try:
+        season,episode=int(season),int(episode)
+    except (TypeError,ValueError):
+        season=episode=0
+    if season>0 and episode>0:
+        url='https://rest.opensubtitles.org/search/episode-%d/imdbid-%s/season-%d/sublanguageid-bul' % (episode,imdb,season)
+    else:
+        url='https://rest.opensubtitles.org/search/imdbid-'+imdb+'/sublanguageid-bul'
     try:
         response=session.get(url,headers={'X-User-Agent':'trailers.to-UA','Accept':'application/json'},timeout=(8,18))
         response.raise_for_status();rows=response.json()
@@ -91,6 +99,10 @@ def opensubtitle(session,data):
     candidates=[]
     for row in rows:
         if not isinstance(row,dict) or row.get('SubLanguageID')!='bul':continue
+        if season and episode:
+            try:
+                if int(row.get('SeriesSeason') or 0)!=season or int(row.get('SeriesEpisode') or 0)!=episode:continue
+            except (TypeError,ValueError):continue
         link=row.get('SubDownloadLink') or ''
         if not link.startswith('https://') or '/filead/' not in link:continue
         name=' '.join(str(row.get(key) or '') for key in ('SubFileName','MovieReleaseName')).lower()

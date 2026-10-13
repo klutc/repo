@@ -252,7 +252,7 @@ def play(p):
                 release += '.s%02de%02d' % (int(season),int(episode))
             elif data.get('year'):
                 release += '.'+str(data['year'])
-            track=subtitle_sources.opensubtitle(SESSION,{'imdb_id':data.get('imdb',''),'file_name':release})
+            track=subtitle_sources.opensubtitle(SESSION,{'imdb_id':data.get('imdb',''),'file_name':release,'season':season,'episode':episode})
         local = subtitle_loader.download(video, track, directory, progress=update)
         if local:
             item.setSubtitles([local])

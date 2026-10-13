@@ -1,6 +1,6 @@
 """
     Plugin for ResolveURL
-    Handles vidsrc-embed.ru, vidsrc.sh, and vidsrcme.ru embed URLs.
+    Handles vidsrc-embed.ru, vidsrc.me, vidsrc.sh, and vidsrcme.ru embed URLs.
     Separate from vidsrc.py (that one is api.vidsrc.top / play.vidsrc.top only).
 
     Chain without a browser (11 requests, 25.09.2026):
@@ -28,10 +28,10 @@ from resolveurl.resolver import ResolveUrl, ResolverError
 
 class VidSrcEmbedResolver(ResolveUrl):
     name = 'VidSrcEmbed'
-    domains = ['vidsrc-embed.ru', 'vidsrc.sh', 'vidsrcme.ru']
+    domains = ['vidsrc-embed.ru', 'vidsrc.me', 'vidsrc.sh', 'vidsrcme.ru']
     # Filmi9 supplies VidSrcME in query form (/embed/tv?imdb=...&season=...);
     # the resolver's request/session flow follows its redirect to vidsrc.sh.
-    pattern = r'(?://|\.)(vidsrc-embed\.ru|vidsrc\.sh|vidsrcme\.ru)/embed/((?:movie|tv)(?:/[0-9a-zA-Z/_-]+|\?[0-9a-zA-Z_?&=.%+-]+))'
+    pattern = r'(?://|\.)(vidsrc-embed\.ru|vidsrc\.me|vidsrc\.sh|vidsrcme\.ru)/embed/((?:movie|tv)(?:/[0-9a-zA-Z/_-]+|\?[0-9a-zA-Z_?&=.%+-]+))'
 
     _UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
            '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
@@ -171,6 +171,6 @@ class VidSrcEmbedResolver(ResolveUrl):
     def get_url(self, host, media_id):
         # Filmi9 lists VidsrcME; its embed redirects to the current vidsrc.sh
         # mirror, where the same player API is available to native clients.
-        if host.lower() == 'vidsrcme.ru':
+        if host.lower() in ('vidsrcme.ru', 'vidsrc.me'):
             host = 'vidsrc.sh'
         return self._default_get_url(host, media_id, template='https://{host}/embed/{media_id}')

@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addon id="plugin.video.filmi9" name="Filmi9 by Klutc" version="1.2.5" provider-name="Klutc">
+<addon id="plugin.video.filmi9" name="Filmi9 by Klutc" version="1.2.6" provider-name="Klutc">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.requests" version="1.1.0" />
     <import addon="script.module.beautifulsoup4" version="0.0.1" />
-    <import addon="script.module.findstreamurl" version="2026.10.14.01" />
+    <import addon="script.module.findstreamurl" version="2026.10.14.02" />
   </requires>
   <extension point="xbmc.python.pluginsource" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">

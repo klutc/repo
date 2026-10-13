@@ -48,12 +48,15 @@ def metadata(html, url):
     backdrop = re.search(r'var\s+backdrop\s*=\s*[\"\']([^\"\']+)', html)
     duration = re.search(r'(\d+)\s*мин', quality.get_text(' ',strip=True) if quality else '')
     originaltitle = original.get_text(strip=True).lstrip('/').strip() if original else ''
+    imdb_link = soup.select_one('a[href*="imdb.com/title/tt"]')
+    imdb_match = re.search(r'/title/(tt\d{7,10})', imdb_link.get('href', '')) if imdb_link else None
     if original:
         original.extract()
     return dict(plot=plot.get_text(' ',strip=True) if plot else '',
                 icon=urljoin(url,poster['src']) if poster else '',
                 title=title.get_text(' ',strip=True) if title else '',
-                originaltitle=originaltitle,year=int(year[0]) if year else 0,genres=genres,
+                originaltitle=originaltitle,imdb=imdb_match.group(1) if imdb_match else '',
+                year=int(year[0]) if year else 0,genres=genres,
                 fanart=urljoin(url,backdrop[1]) if backdrop else '',
                 duration=int(duration[1])*60 if duration else 0)
 

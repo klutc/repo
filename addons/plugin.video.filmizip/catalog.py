@@ -55,7 +55,7 @@ class Catalog:
         self.failures = []
         failed = []
         def apply(item, data):
-            for key in ('plot','icon','year','genres','fanart','duration','originaltitle'):
+            for key in ('plot','icon','year','genres','fanart','duration','originaltitle','imdb'):
                 if data.get(key):item[key]=data[key]
         with ThreadPoolExecutor(max_workers=6) as pool:
             jobs={pool.submit(self.fetch,item['url']):item for item in items}

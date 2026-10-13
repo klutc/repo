@@ -21,7 +21,7 @@ Workflow-ът Build and publish Kodi repository генерира каталог�
 
 | Добавка | Версия |
 | --- | --- |
-| Filmi9 by Klutc | 1.2.6 |
+| Filmi9 by Klutc | 1.2.7 |
 | FilmiZip by Klutc | 1.3.7 |
 | ZenoPlay by Klutc | 1.0.6 |
 | Find Stream URL (зависимост) | 2026.10.14.02 |

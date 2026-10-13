@@ -1,0 +1,5 @@
+ZenoPlay on Kodi Android / Android TV
+
+The add-on uses ZenoPlay's AJAX endpoint to retrieve its player list and sends the selected provider URL to the shared Find Stream URL resolvers. The repository includes native handlers for the ZenoPlay provider families VidSrcEmbed, RuPlayer/SPXPlayer and Morencius, plus the general host resolvers.
+
+Playback does not launch Chrome for hosts with native resolver support. Some providers may still require a desktop browser or may reject requests from a particular network; in that case choose another provider. Subtitle providers receive the original show title, IMDb id when available, season and episode through Kodi's VideoInfoTag. Embedded Bulgarian captions are downloaded and converted to Kodi's local subtitle format.

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<addon id="plugin.video.zenoplay" name="ZenoPlay by Klutc" version="1.0.0" provider-name="Klutc">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0" />
+    <import addon="script.module.requests" version="1.1.0" />
+    <import addon="script.module.beautifulsoup4" version="0.0.1" />
+    <import addon="script.module.findstreamurl" version="2026.10.14.01" />
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="bg">Филми и сериали от ZenoPlay</summary>
+    <description lang="bg">Български филми и сериали с източници, обложки, метаданни и субтитри.</description>
+    <platform>all</platform><license>MIT</license><language>bg</language>
+    <assets><icon>resources/icon.png</icon></assets>
+  </extension>
+</addon>

@@ -1,0 +1,250 @@
+import os
+import sys
+import traceback
+from urllib.parse import parse_qsl, urlencode, urlsplit
+
+import requests
+import xbmc
+import xbmcaddon
+import xbmcgui
+import xbmcplugin
+import xbmcvfs
+import resolveurl
+import native_resolver
+import browser
+import hosts
+import subtitles as subtitle_loader
+from movieinfo import MovieInfo
+from labels import movie_label, source_label, movie_year, episode_metadata
+from parser import BASE, categories, listing, metadata, providers, search_url, catalogue_url
+
+HANDLE = int(sys.argv[1])
+ROOT = sys.argv[0]
+APP_NAME = 'ZenoPlay by Klutc'
+ADDON = xbmcaddon.Addon()
+ADDON_PATH = ADDON.getAddonInfo('path')
+PROFILE = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
+APP_ICON = os.path.join(ADDON_PATH, 'resources', 'icon.png')
+DIRECTORY_OK = True
+THUMBNAILS = False
+SESSION = requests.Session()
+SESSION.headers.update({'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36'})
+
+
+def get(url):
+    response = SESSION.get(url, timeout=(10, 30))
+    response.raise_for_status()
+    response.encoding = 'utf-8'
+    if 'Just a moment...' in response.text or 'Attention Required! | Cloudflare' in response.text:
+        raise ValueError('ZenoPlay изисква проверка в браузър или временно ограничава връзката.')
+    return response.text
+
+
+def fill_info(item, data):
+    tag = item.getVideoInfoTag()
+    data = dict(data, year=movie_year(data))
+    title = data.get('name') or data.get('title', '')
+    tag.setTitle(title)
+    item.setProperty('FilmDisplayTitle', movie_label(title, data.get('year', 0)))
+    item.setProperty('FilmYear', str(data['year']) if data.get('year') else '—')
+    tag.setPlot(data.get('plot', ''))
+    if data.get('year'):
+        tag.setYear(int(data['year']))
+    if data.get('genres'):
+        tag.setGenres(data['genres'])
+    if data.get('originaltitle'):
+        tag.setOriginalTitle(data['originaltitle'])
+    if data.get('tvshowtitle'):
+        tag.setTvShowTitle(data['tvshowtitle'])
+    if data.get('season') is not None:
+        tag.setSeason(int(data['season']))
+    if data.get('episode') is not None:
+        tag.setEpisode(int(data['episode']))
+    tag.setMediaType(data.get('media_type', 'movie'))
+    if data.get('imdb'):
+        tag.setUniqueIDs({'imdb': data['imdb']}, 'imdb')
+    if data.get('rating'):
+        tag.setRating(float(data['rating']))
+    icon = data.get('icon') or APP_ICON
+    item.setArt({'thumb': icon, 'poster': icon, 'fanart': data.get('fanart', '')})
+
+
+def add(name, action, url='', data=None, source='', source_name='', **extra):
+    data = data or {}
+    params = dict(action=action, url=url, name=name, source=source, episode=extra.get('episode', ''))
+    params.update(extra)
+    year = movie_year(data)
+    label = source_label(name, year, source_name) if action == 'play' else movie_label(name, year) if action in ('detail', 'episode') else name
+    item = xbmcgui.ListItem(label=label)
+    item_data = dict(data, name=name)
+    if action == 'episode':
+        item_data.update(media_type='episode', season=extra.get('season'), episode=extra.get('episode'), tvshowtitle=data.get('originaltitle') or name)
+        label = 'S%02dE%02d — %s' % (int(extra.get('season') or 0), int(extra.get('episode') or 0), name)
+        item.setLabel(label)
+    fill_info(item, item_data)
+    if action == 'play':
+        item.setProperty('IsPlayable', 'true')
+    if action in ('detail', 'episode'):
+        item.setProperty('ZenoPlayMovie', 'true')
+        context = ROOT + '?' + urlencode(dict(action='info', url=url, name=name))
+        item.addContextMenuItems([('Media Info', 'RunPlugin(' + context + ')')])
+    xbmcplugin.addDirectoryItem(HANDLE, ROOT + '?' + urlencode(params), item, action != 'play')
+
+
+def info_dialog(data, name, allow_sources=True):
+    data = dict(data, name=name)
+    dialog = MovieInfo('ZenoPlayInfo.xml', ADDON_PATH, 'Default', '720p', movie=data, allow_sources=allow_sources)
+    dialog.doModal()
+    proceed = dialog.proceed
+    del dialog
+    return proceed
+
+
+def fetch_detail(url):
+    return metadata(get(url), url)
+
+
+def browse(url):
+    global THUMBNAILS
+    xbmcplugin.setContent(HANDLE, 'tvshows' if '/tv-shows/' in url else 'movies')
+    xbmcplugin.setProperty(HANDLE, 'ZenoPlayCatalog', 'true')
+    items, next_page = listing(get(url), url)
+    for item in items:
+        add(item['name'], 'detail', item['url'], item)
+    if next_page:
+        add('Следваща страница →', 'browse', next_page)
+    THUMBNAILS = True
+    if not items:
+        xbmcgui.Dialog().notification(APP_NAME, 'Няма намерени заглавия.', xbmcgui.NOTIFICATION_INFO)
+
+
+def show(data, name):
+    global DIRECTORY_OK
+    if data['media_type'] == 'tvshow':
+        if not data['episodes']:
+            raise ValueError('Не са намерени епизоди за този сериал.')
+        xbmcplugin.setContent(HANDLE, 'episodes')
+        for row in data['episodes']:
+            add(name, 'episode', row['url'], data, season=row['season'], episode=row['episode'], plot=row.get('plot') or data['plot'])
+        return
+    sources = providers(data, SESSION)
+    if not sources:
+        raise ValueError('ZenoPlay не върна активни видеоизточници за това заглавие.')
+    xbmcplugin.setContent(HANDLE, 'files')
+    for address, label in sources:
+        add(name, 'play', data['url'], data, source=address, source_name=label)
+
+
+def resolve(source, page_url, source_name, episode=''):
+    SESSION.headers['Referer'] = page_url
+    host = urlsplit(source).hostname or ''
+    if urlsplit(source).path.lower().endswith(('.m3u8', '.mp4', '/master.txt')):
+        return source + '|' + urlencode({'User-Agent': SESSION.headers['User-Agent'], 'Referer': page_url}), ''
+    if host in ('playmate.to', 'www.playmate.to'):
+        return hosts.playmate(SESSION, source)
+    try:
+        return native_resolver.resolve(SESSION, source, page_url, cache_directory=os.path.join(PROFILE, 'resolver'),
+                                       prefer_mp4=xbmc.getCondVisibility('System.Platform.Android') and ADDON.getSetting('voe_mp4') != 'false')
+    except native_resolver.UnsupportedHost:
+        try:
+            return resolveurl.resolve(source)
+        except Exception as error:
+            if xbmc.getCondVisibility('System.Platform.Android'):
+                raise ValueError('Този видеоизточник не поддържа нативно възпроизвеждане на Android TV: ' + str(error)) from error
+            return browser.resolve(source, page_url=page_url, source=source_name, episode=episode)
+
+
+def play(p):
+    data = fetch_detail(p['url'])
+    rows = providers(data, SESSION)
+    source = p.get('source', '')
+    selected = next((row for row in rows if row[0] == source), None)
+    if selected is None:
+        raise ValueError('Видеоизточникът вече не е наличен.')
+    progress = xbmcgui.DialogProgress()
+    progress.create(APP_NAME, 'Зареждане на видеоизточника…')
+    meta_window = xbmcgui.Window(10000)
+    meta_window.clearProperty('findstreamurl.imdb')
+    try:
+        result = resolve(source, data['url'], selected[1], p.get('episode', ''))
+    finally:
+        progress.close()
+    resolved_imdb = meta_window.getProperty('findstreamurl.imdb')
+    meta_window.clearProperty('findstreamurl.imdb')
+    if resolved_imdb:
+        data['imdb'] = resolved_imdb
+    if isinstance(result, (list, tuple)):
+        video = result[0] if result else ''
+        subtitles = result[1] if len(result) > 1 else ''
+    else:
+        video, subtitles = result, ''
+    if not video:
+        raise ValueError('Източникът не върна видеоадрес.')
+    item = xbmcgui.ListItem(path=video)
+    path = urlsplit(video.split('|')[0]).path.lower()
+    if path.endswith('.mp4'):
+        item.setMimeType('video/mp4')
+        item.setContentLookup(False)
+    elif path.endswith(('.m3u8', '/master.txt')):
+        item.setMimeType('application/vnd.apple.mpegurl')
+        item.setContentLookup(False)
+    item.setArt({'thumb': data.get('icon', ''), 'poster': data.get('icon', '')})
+    playback_data = episode_metadata(data, p.get('episode', ''), source, data['url'])
+    if p.get('episode'):
+        playback_data.update(season=data.get('season'), episode=data.get('episode'), media_type='episode')
+    fill_info(item, playback_data)
+    sub_progress = xbmcgui.DialogProgress()
+    sub_progress.create(APP_NAME, 'Зареждане на български субтитри…')
+    try:
+        directory = os.path.join(PROFILE, 'subtitles')
+        local = subtitle_loader.download(video, subtitle_loader.select(subtitles, source), directory)
+        if local:
+            item.setSubtitles([local])
+    except Exception as error:
+        xbmc.log('ZenoPlay subtitles: ' + str(error), xbmc.LOGWARNING)
+    finally:
+        sub_progress.close()
+    xbmcplugin.setResolvedUrl(HANDLE, True, item)
+
+
+p = dict(parse_qsl(sys.argv[2].lstrip('?')))
+action = p.get('action', 'home')
+try:
+    if action != 'info':
+        xbmcplugin.setProperty(HANDLE, 'ZenoPlayCatalog', 'false')
+    if action == 'home':
+        add('Търсене', 'search')
+        add('Филми', 'browse', catalogue_url('/movies/'))
+        add('Сериали', 'browse', catalogue_url('/tv-shows/'))
+        for label, url in categories(get(BASE)):
+            add(label, 'browse', url)
+    elif action == 'browse':
+        browse(p['url'])
+    elif action == 'search':
+        query = xbmcgui.Dialog().input('Търсене на филм или сериал')
+        if query.strip():
+            browse(search_url(query))
+    elif action in ('detail', 'episode'):
+        data = fetch_detail(p['url'])
+        name = p.get('name') or data['name']
+        if action == 'episode':
+            data['season'] = int(p.get('season') or data.get('season') or 0) or None
+            data['episode'] = int(p.get('episode') or data.get('episode') or 0) or None
+        if not info_dialog(data, name):
+            DIRECTORY_OK = False
+        else:
+            show(data, name)
+    elif action == 'info':
+        info_dialog(fetch_detail(p['url']), p.get('name', ''), allow_sources=False)
+    elif action == 'play':
+        play(p)
+except Exception as error:
+    xbmc.log('ZenoPlay: ' + traceback.format_exc(), xbmc.LOGERROR)
+    xbmcgui.Dialog().ok(APP_NAME, str(error))
+    if action == 'play':
+        xbmcplugin.setResolvedUrl(HANDLE, False, xbmcgui.ListItem())
+finally:
+    if action not in ('play', 'info'):
+        xbmcplugin.endOfDirectory(HANDLE, succeeded=DIRECTORY_OK)
+        if THUMBNAILS and xbmc.getSkinDir() == 'skin.confluence':
+            xbmc.executebuiltin('Container.SetViewMode(500)')

@@ -29,6 +29,15 @@ DIRECTORY_OK = True
 THUMBNAILS = False
 SESSION = requests.Session()
 SESSION.headers.update({'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36'})
+RETURN_URL_PROPERTY = 'Klutc.FilmiZip.ReturnUrl'
+
+
+def consume_playback_return(url):
+    window = xbmcgui.Window(10000)
+    previous = window.getProperty(RETURN_URL_PROPERTY)
+    if previous:
+        window.clearProperty(RETURN_URL_PROPERTY)
+    return bool(previous and previous == url)
 
 def get(url):
     response = SESSION.get(url, timeout=(10, 30))
@@ -115,7 +124,8 @@ def show(p):
     global DIRECTORY_OK
     data = detail(get(p['url']), p['url'])
     catalog().write(p['url'],{key:data[key] for key in ('plot','icon','year','genres','fanart','duration','title','originaltitle')})
-    if not p.get('episode') and not info_dialog(data,p.get('name') or data['title']):
+    returned_from_playback = consume_playback_return(p['url'])
+    if not p.get('episode') and not returned_from_playback and not info_dialog(data,p.get('name') or data['title']):
         DIRECTORY_OK=False
         return
     xbmcplugin.setContent(HANDLE,'files')
@@ -204,10 +214,13 @@ def play(p):
         xbmcgui.Dialog().notification(APP_NAME, 'Субтитрите не се заредиха: ' + str(error), xbmcgui.NOTIFICATION_WARNING)
     finally:
         progress.close()
+    xbmcgui.Window(10000).setProperty(RETURN_URL_PROPERTY, p['url'])
     xbmcplugin.setResolvedUrl(HANDLE, True, item)
 
 p = dict(parse_qsl(sys.argv[2].lstrip('?')))
 action = p.get('action', 'home')
+if action not in ('detail', 'play'):
+    xbmcgui.Window(10000).clearProperty(RETURN_URL_PROPERTY)
 try:
     if action != 'info':
         xbmcplugin.setProperty(HANDLE,'FilmiZipCatalog','false')

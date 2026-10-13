@@ -33,6 +33,15 @@ DIRECTORY_OK = True
 THUMBNAILS = False
 SESSION = requests.Session()
 SESSION.headers.update({'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36'})
+RETURN_URL_PROPERTY = 'Klutc.ZenoPlay.ReturnUrl'
+
+
+def consume_playback_return(url):
+    window = xbmcgui.Window(10000)
+    previous = window.getProperty(RETURN_URL_PROPERTY)
+    if previous:
+        window.clearProperty(RETURN_URL_PROPERTY)
+    return bool(previous and previous == url)
 BG_AUDIO_CACHE = {}
 BG_AUDIO_CACHE_PATH = os.path.join(PROFILE, 'bg_audio_cache.json')
 
@@ -273,11 +282,14 @@ def play(p):
         xbmc.log('ZenoPlay subtitles: ' + str(error), xbmc.LOGWARNING)
     finally:
         sub_progress.close()
+    xbmcgui.Window(10000).setProperty(RETURN_URL_PROPERTY, data['url'])
     xbmcplugin.setResolvedUrl(HANDLE, True, item)
 
 
 p = dict(parse_qsl(sys.argv[2].lstrip('?')))
 action = p.get('action', 'home')
+if action not in ('detail', 'episode', 'play'):
+    xbmcgui.Window(10000).clearProperty(RETURN_URL_PROPERTY)
 try:
     if action != 'info':
         xbmcplugin.setProperty(HANDLE, 'ZenoPlayCatalog', 'false')
@@ -300,7 +312,8 @@ try:
         if action == 'episode':
             data['season'] = int(p.get('season') or data.get('season') or 0) or None
             data['episode'] = int(p.get('episode') or data.get('episode') or 0) or None
-        if not info_dialog(data, name):
+        returned_from_playback = consume_playback_return(p['url'])
+        if not returned_from_playback and not info_dialog(data, name):
             DIRECTORY_OK = False
         else:
             show(data, name)

@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 import xbmcvfs
 import xbmcaddon
 import traceback
@@ -40,6 +41,26 @@ def consume_playback_return(url):
     if previous:
         window.clearProperty(RETURN_URL_PROPERTY)
     return bool(previous and previous == url)
+
+def get_search_history():
+    try:
+        with open(os.path.join(PROFILE, 'search_history.json'), 'r', encoding='utf-8') as history_file:
+            history = json.load(history_file)
+        return [query for query in history if isinstance(query, str) and query.strip()][:10] if isinstance(history, list) else []
+    except (OSError, ValueError, TypeError):
+        return []
+
+def save_search(query):
+    query = query.strip()
+    if not query:
+        return
+    history = [item for item in get_search_history() if item.casefold() != query.casefold()]
+    history.insert(0, query)
+    try:
+        with open(os.path.join(PROFILE, 'search_history.json'), 'w', encoding='utf-8') as history_file:
+            json.dump(history[:10], history_file, ensure_ascii=False)
+    except OSError as error:
+        xbmc.log('FilmiZip search history: ' + str(error), xbmc.LOGWARNING)
 
 def get(url):
     response = SESSION.get(url, timeout=(10, 30))
@@ -260,9 +281,19 @@ try:
     elif action == 'browse':
         browse(p['url'])
     elif action == 'search':
+        add('Ново търсене…', 'search_new')
+        for query in get_search_history():
+            add(query, 'search_query', query=query)
+    elif action == 'search_new':
         query = xbmcgui.Dialog().input('Търсене на филм или сериал')
         if query.strip():
+            save_search(query)
             browse(BASE + 'index.php?' + urlencode(dict(do='search', subaction='search', story=query.strip())))
+    elif action == 'search_query':
+        query = p.get('query', '').strip()
+        if query:
+            save_search(query)
+            browse(BASE + 'index.php?' + urlencode(dict(do='search', subaction='search', story=query)))
     elif action == 'detail':
         show(p)
     elif action == 'info':

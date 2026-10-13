@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon id="repository.klutc" name="klutc Repo" version="1.0.0" provider-name="klutc">
+  <extension point="xbmc.addon.repository" name="klutc Repo">
+    <dir minversion="20.0.0">
+      <info compressed="false">https://klutc.github.io/repo/addons.xml</info>
+      <checksum>https://klutc.github.io/repo/addons.xml.md5</checksum>
+      <datadir zip="true">https://klutc.github.io/repo/</datadir>
+      <hashes>false</hashes>
+    </dir>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">Kodi add-ons by klutc</summary>
+    <description lang="en_GB">Personal Kodi add-on repository, hosted on GitHub Pages.</description>
+    <platform>all</platform>
+    <license>MIT</license>
+    <source>https://github.com/klutc/repo</source>
+  </extension>
+</addon>

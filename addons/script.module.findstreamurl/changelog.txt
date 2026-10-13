@@ -1,0 +1,15 @@
+2026.10.13.01
+- Package the tested local resolver snapshot for klutc Repo, including local ABS/Byse adjustments and license texts.
+
+Version 2026.09.25.03
+- ruplayer.py: spxplayer.org (same FirePlayer as ruplayer.org); API, Origin and embed url follow the host of the link
+- vidsrcembed.py: imdb id from api.php (data.imdb_id, tt...) published as Window(10000) property findstreamurl.imdb; resolve() contract unchanged
+
+Version 2026.09.25.02
+- New resolver vidsrcembed.py (vidsrc-embed.ru, vidsrc.sh): embed -> cloudorchestranova -> api.php, stream urls decrypted by lib/vsdec.py (ChaCha20 key read from the 5-min WASM, pure Python); returns master m3u8|UA&Referer&Origin
+
+Version 2026.09.25.01
+- New resolver morencius.py (morencius.com, VidHide player): hls2 -> hls3 -> hls4, Bulgarian .vtt subtitles
+
+Version 2023.07.11.01
+- The Begining

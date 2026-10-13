@@ -1,0 +1,7 @@
+Android TV resolver update:
+- Vsembed follows the public nested-player API, decodes its ChaCha20/WASM data with portable Python, obtains the stream-host token and selects a working HLS server. No browser or WASM runtime required.
+- Byse/FileMoon follows embed_frame_url, registers an ephemeral P-256 key with the site, completes the automatic computation check, and decrypts the returned playback data using the existing ResolveURL AES-GCM library. This may take up to four minutes on the first attempt; Cancel stops the check. Valid site-issued tokens are cached for repeat playback (up to ten minutes). No visual CAPTCHA is bypassed or automated.
+- VOE uses the host-provided MP4 stream by default on Android, after a small Range probe; falls back to HLS when MP4 is unavailable. Settings can disable MP4. Bulgarian captions are retained.
+- VIDM and PlayM retain direct HTTP playback; ABS uses the installed resolver.
+- Upbolt is blocked by a Cloudflare managed challenge (HTTP 403), including in an isolated Linux browser test. It is NOT fixed or marked supported.
+Validation: real HLS manifests, variants and small video samples for Vsembed (Aquaman/The Tearsmith) and VOE (eight current movies), native Byse/FMооn manifests, and FMoon Bulgarian HLS captions. Android TV hardware verification remains necessary. Desktop browser fallback is retained for other sources on Linux.

@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='utf-8'?>
+<addon id="script.module.findstreamurl" name="Find Stream URL" version="2026.10.13.01" provider-name="Forked by MartinStZ">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0" />
+    <import addon="script.module.six" />
+    <import addon="script.module.kodi-six" />
+    <import addon="plugin.video.youtube" optional="true" />
+    <import addon="script.module.python.twitch" optional="true" />
+    <import addon="plugin.googledrive" optional="true" />
+  </requires>
+  <extension point="xbmc.python.module" library="lib" />
+  <extension point="xbmc.python.pluginsource" library="lib/default.py" />
+  <extension point="xbmc.addon.metadata">
+    <platform>all</platform>
+    <summary lang="en_GB">Resolve common video host URL's to be playable in XBMC/Kodi.</summary>
+    <description lang="en_GB">Resolve common video host URL's to be playable in XBMC/Kodi, simplify addon development of video plugins requiring multi video hosts.</description>
+    <assets>
+      <icon />
+      <fanart />
+    </assets>
+    <license>GPL-3.0-or-later</license>
+  </extension>
+</addon>

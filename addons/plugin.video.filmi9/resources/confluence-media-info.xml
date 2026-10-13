@@ -1,0 +1,13 @@
+<control type="group" id="8121">
+ <visible>Control.IsVisible(500) + Control.HasFocus(500) + String.IsEqual(Container.Property(Filmi9Catalog),true) + String.IsEqual(ListItem.Property(Filmi9Movie),true) + System.IdleTime(20)</visible>
+ <animation effect="fade" start="0" end="100" time="180">Visible</animation>
+ <left>245</left><top>150</top>
+ <control type="image"><width>790</width><height>425</height><texture colordiffuse="FA152337">special://home/addons/plugin.video.filmi9/resources/white.png</texture></control>
+ <control type="image"><width>790</width><height>3</height><texture colordiffuse="FFB38BFA">special://home/addons/plugin.video.filmi9/resources/white.png</texture></control>
+ <control type="label"><left>25</left><top>15</top><width>740</width><height>35</height><font>font24_title</font><textcolor>FFFFFFFF</textcolor><label>$INFO[ListItem.Property(FilmDisplayTitle)]</label><scroll>true</scroll></control>
+ <control type="image"><left>25</left><top>75</top><width>180</width><height>295</height><texture background="true">$INFO[ListItem.Art(poster)]</texture><aspectratio>keep</aspectratio></control>
+ <control type="label"><left>235</left><top>70</top><width>520</width><height>30</height><font>font13</font><textcolor>FFB38BFA</textcolor><label>Година: $INFO[ListItem.Property(FilmYear)]</label></control>
+ <control type="label"><left>235</left><top>108</top><width>520</width><height>30</height><font>font13</font><textcolor>FFE7C778</textcolor><label>Жанр: $INFO[ListItem.Genre]</label><scroll>true</scroll></control>
+ <control type="textbox"><left>235</left><top>155</top><width>520</width><height>215</height><font>font13</font><textcolor>FFE4EBF2</textcolor><label>$INFO[ListItem.Plot]</label><autoscroll time="3500" delay="6000" repeat="5000">true</autoscroll></control>
+ <control type="label"><left>235</left><top>385</top><width>520</width><height>25</height><font>font12</font><textcolor>FFB0A1C2</textcolor><label>Media Info · Натисни за подробности и видеоизточници</label></control>
+</control>

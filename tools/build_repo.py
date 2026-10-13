@@ -63,7 +63,7 @@ def build():
         '<title>klutc Repo</title><style>body{font:18px system-ui;max-width:760px;margin:60px auto;padding:0 24px;line-height:1.6}a{color:#1769aa}</style>'
         '<h1>klutc Repo</h1><p>Изтегли repository.klutc ZIP и го инсталирай в Kodi чрез '
         'Add-ons → Install from zip file. След това отвори Install from repository → klutc Repo.</p>'
-        '<p>Поддържа Kodi 20 и по-нови версии. Хранилището засега съдържа само repository добавката.</p>'
+        '<p>Поддържа Kodi 20 и по-нови версии. Съдържа Filmi9 by Klutc, FilmiZip by Klutc и необходимия Find Stream URL модул.</p>'
         '<ul>' + "".join(links) + '</ul><p><a href="https://github.com/klutc/repo">GitHub</a></p></html>',
         encoding="utf-8",
     )

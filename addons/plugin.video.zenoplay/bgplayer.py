@@ -1,6 +1,32 @@
 """Native resolver for ZenoPlay's BG Player (FirePlayer) embeds."""
+import html
+import json
 import re
 from urllib.parse import urlencode, urlsplit
+
+
+def _subtitle_track(page):
+    """Return the best subtitle URL embedded in a FirePlayer page."""
+    match = re.search(
+        r'\bplayerjsSubtitle\s*=\s*("(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\')',
+        page,
+        re.S,
+    )
+    if not match:
+        return ''
+    raw = match.group(1)
+    try:
+        value = json.loads(raw) if raw.startswith('"') else raw[1:-1]
+    except ValueError:
+        value = raw[1:-1]
+    value = html.unescape(value.replace(r'\/', '/'))
+    tracks = re.findall(r'\[([^\]]+)\](https?://[^\s,"\']+)', value, re.I)
+    if not tracks:
+        return ''
+    def score(track):
+        label = track[0].strip().lower()
+        return 1 if label in ('bg', 'bul', 'bulgarian', 'български') or 'bulgar' in label else 0
+    return max(tracks, key=score)[1]
 
 
 def resolve(session, url, page_url):
@@ -42,4 +68,14 @@ def resolve(session, url, page_url):
         raise ValueError('BG Player не върна HLS видеоадрес за това заглавие.')
     headers = urlencode({'User-Agent': session.headers.get('User-Agent', ''),
                          'Referer': url})
-    return stream + '|' + headers, ''
+    # The provider page carries the subtitle declaration. These tracks are
+    # supplied by BG Player itself; keep their request referer for Kodi's
+    # downloader because some subtitle endpoints validate it.
+    player = session.get(url, headers={'Referer': page_url}, timeout=(10, 25))
+    player.raise_for_status()
+    subtitle_url = _subtitle_track(player.text)
+    subtitle = subtitle_url + '|' + urlencode({
+        'User-Agent': session.headers.get('User-Agent', ''),
+        'Referer': url,
+    }) if subtitle_url else ''
+    return stream + '|' + headers, subtitle

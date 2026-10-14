@@ -233,15 +233,14 @@ def show(data, name, auto_play=False):
     xbmcplugin.setContent(HANDLE, 'files')
     first_play_url = ''
     for address, label in sources:
-        item_url = add(name, 'play', data['url'], data, source=address, source_name=label,
-                       season=data.get('season') or '', episode=data.get('episode') or '')
+        item_url = add(name, 'play', data['url'], data, source=address, source_name=label)
         if not first_play_url:
             first_play_url = item_url
     if auto_play:
         AUTO_PLAY_URL = first_play_url
 
 
-def resolve(source, page_url, source_name, episode='', media_data=None):
+def resolve(source, page_url, source_name, episode=''):
     SESSION.headers['Referer'] = page_url
     host = urlsplit(source).hostname or ''
     if host.lower().removeprefix('www.') in ('galaxicon.org', 'playtube.tv', 'rollo.uno'):
@@ -250,9 +249,6 @@ def resolve(source, page_url, source_name, episode='', media_data=None):
         return source + '|' + urlencode({'User-Agent': SESSION.headers['User-Agent'], 'Referer': page_url}), ''
     if host in ('playmate.to', 'www.playmate.to'):
         return hosts.playmate(SESSION, source)
-    if host.lower().removeprefix('www.') in ('vsembed.su', 'vsembed.ru', 'vsembed.com'):
-        import vsembed
-        return vsembed.resolve(SESSION, source, page_url, subtitle_data=media_data or {})
     try:
         return native_resolver.resolve(SESSION, source, page_url, cache_directory=os.path.join(PROFILE, 'resolver'),
                                        prefer_mp4=xbmc.getCondVisibility('System.Platform.Android') and ADDON.getSetting('voe_mp4') != 'false')
@@ -267,14 +263,6 @@ def resolve(source, page_url, source_name, episode='', media_data=None):
 
 def play(p):
     data = fetch_detail(p['url'])
-    for key in ('season', 'episode'):
-        try:
-            if p.get(key):
-                data[key] = int(p[key])
-        except (TypeError, ValueError):
-            pass
-    if data.get('episode'):
-        data['media_type'] = 'episode'
     rows = providers(data, SESSION)
     source = p.get('source', '')
     selected = next((row for row in rows if row[0] == source), None)
@@ -285,7 +273,7 @@ def play(p):
     meta_window = xbmcgui.Window(10000)
     meta_window.clearProperty('findstreamurl.imdb')
     try:
-        result = resolve(source, data['url'], selected[1], p.get('episode') or data.get('episode') or '', data)
+        result = resolve(source, data['url'], selected[1], p.get('episode', ''))
     finally:
         progress.close()
     resolved_imdb = meta_window.getProperty('findstreamurl.imdb')
@@ -308,7 +296,7 @@ def play(p):
         item.setMimeType('application/vnd.apple.mpegurl')
         item.setContentLookup(False)
     item.setArt({'thumb': data.get('icon', ''), 'poster': data.get('icon', '')})
-    playback_data = episode_metadata(data, p.get('episode') or data.get('episode') or '', source, data['url'])
+    playback_data = episode_metadata(data, p.get('episode', ''), source, data['url'])
     if p.get('episode'):
         playback_data.update(season=data.get('season'), episode=data.get('episode'), media_type='episode')
     fill_info(item, playback_data)

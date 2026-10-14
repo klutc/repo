@@ -32,8 +32,8 @@ def episode_metadata(data, episode, source_url='', page_url=''):
         return data
     result=dict(data)
     source_query=dict(parse_qsl(urlsplit(source_url).query))
-    season=source_query.get('season') or source_query.get('s') or data.get('season')
-    episode_number=source_query.get('episode') or source_query.get('e') or data.get('episode')
+    season=source_query.get('season') or source_query.get('s')
+    episode_number=source_query.get('episode') or source_query.get('e')
     raw=str(episode)
     match=re.search(r'(?i)(?:s(\d{1,2})[ ._-]*e(\d{1,3})|(\d{1,2})x(\d{1,3}))',raw)
     if match:

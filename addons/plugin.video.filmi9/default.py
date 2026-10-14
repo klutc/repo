@@ -4,7 +4,6 @@ import json
 import xbmcvfs
 import xbmcaddon
 import traceback
-import re
 from urllib.parse import parse_qsl, urlencode, urlsplit
 import requests
 import xbmc
@@ -18,7 +17,6 @@ from catalog import Catalog
 from movieinfo import MovieInfo
 from labels import movie_label, source_label, movie_year, episode_metadata
 import subtitles as subtitle_loader
-import vsembed as subtitle_sources
 from parser import BASE, categories, listing, detail, source_rows, search_url, api_listing, catalogue_url
 
 HANDLE = int(sys.argv[1])
@@ -201,10 +199,6 @@ def play(p):
     selected=next((s for s in sources if s[0]==p.get('source')),None)
     if selected is None:raise ValueError('Видеоизточникът вече не е наличен.')
     host,label=selected
-    source_query=dict(parse_qsl(urlsplit(host).query))
-    if not data.get('imdb') and source_query.get('imdb'):
-        imdb_id=source_query['imdb']
-        data['imdb']=imdb_id if imdb_id.startswith('tt') else 'tt'+imdb_id
     SESSION.headers['Referer']=p['url']
     progress = xbmcgui.DialogProgress()
     slow_host=(urlsplit(host).hostname or '').lower()
@@ -265,15 +259,6 @@ def play(p):
     try:
         directory = os.path.join(xbmcvfs.translatePath(xbmcaddon.Addon().getAddonInfo('profile')), 'subtitles')
         track = subtitle_loader.select(subtitles,host) or subtitle_loader.select(source_data.get('subtitles',[]),host)
-        if not track and urlsplit(host).hostname in ('vidsrc.me','vidsrc.sh','vidsrc-embed.ru','vidsrcme.ru'):
-            show_title=video_metadata.get('tvshowtitle') or data.get('originaltitle') or data.get('title','')
-            release=re.sub(r'[^a-z0-9]+','.',show_title.lower()).strip('.')
-            season,episode=video_metadata.get('season'),video_metadata.get('episode')
-            if season and episode:
-                release += '.s%02de%02d' % (int(season),int(episode))
-            elif data.get('year'):
-                release += '.'+str(data['year'])
-            track=subtitle_sources.opensubtitle(SESSION,{'imdb_id':data.get('imdb',''),'file_name':release,'season':season,'episode':episode})
         local = subtitle_loader.download(video, track, directory, progress=update)
         if local:
             item.setSubtitles([local])

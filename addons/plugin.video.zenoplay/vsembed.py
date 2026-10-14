@@ -1,8 +1,6 @@
 """Vsembed's public player protocol, using only portable Python and HTTP."""
 import base64
-import difflib
 import json
-import math
 import re
 import struct
 import requests
@@ -76,43 +74,6 @@ def chacha20(key,encrypted):
     return bytes(out)
 
 
-def opensubtitle(session,data):
-    """Pick a Bulgarian OpenSubtitles file when the Vsembed API has no track."""
-    imdb=re.sub(r'^tt','',str(data.get('imdb_id') or '').lower())
-    if not imdb.isdigit():return ''
-    season,episode=data.get('season'),data.get('episode')
-    try:season,episode=int(season),int(episode)
-    except (TypeError,ValueError):season=episode=0
-    if season>0 and episode>0:
-        url='https://rest.opensubtitles.org/search/episode-%d/imdbid-%s/season-%d/sublanguageid-bul' % (episode,imdb,season)
-    else:
-        url='https://rest.opensubtitles.org/search/imdbid-'+imdb+'/sublanguageid-bul'
-    try:
-        response=session.get(url,headers={'X-User-Agent':'trailers.to-UA','Accept':'application/json'},timeout=(8,18))
-        response.raise_for_status();rows=response.json()
-    except (requests.RequestException,ValueError):return ''
-    if not isinstance(rows,list):return ''
-    release=str(data.get('file_name') or '').replace('\\','/').rsplit('/',1)[-1]
-    release=re.sub(r'\.[^.]+$','',release).lower()
-    candidates=[]
-    for row in rows:
-        if not isinstance(row,dict) or row.get('SubLanguageID')!='bul':continue
-        if season and episode:
-            try:
-                if int(row.get('SeriesSeason') or 0)!=season or int(row.get('SeriesEpisode') or 0)!=episode:continue
-            except (TypeError,ValueError):continue
-        link=row.get('SubDownloadLink') or ''
-        if not link.startswith('https://') or '/filead/' not in link:continue
-        name=' '.join(str(row.get(key) or '') for key in ('SubFileName','MovieReleaseName')).lower()
-        match=difflib.SequenceMatcher(None,release,name).ratio() if release else 0
-        downloads=int(row.get('SubDownloadsCnt') or 0)
-        score=match*100+math.log1p(downloads)
-        candidates.append((score,link,str(row.get('SubEncoding') or 'UTF-8')))
-    if not candidates:return ''
-    _,link,encoding=max(candidates,key=lambda item:item[0])
-    return link+'|'+urlencode({'_encoding':encoding})
-
-
 def embedded_subtitle(data,base):
     rows=data.get('default_subs') or (data.get('data') or {}).get('default_subs') or []
     choices=[]
@@ -134,7 +95,7 @@ def config(html,name):
     return json.loads(match[1])
 
 
-def resolve(session,url,referer,progress=None,subtitle_data=None):
+def resolve(session,url,referer,progress=None):
     from native_resolver import fetch,play_url
     p=urlsplit(url);query=parse_qs(p.query)
     if p.path.startswith('/embed/movie'):
@@ -169,14 +130,7 @@ def resolve(session,url,referer,progress=None,subtitle_data=None):
             address=stream.replace('__TOKEN__',token) if '__TOKEN__' in stream else stream+('&' if '?' in stream else '?')+urlencode({'token':token}) if token else stream
             r=session.get(address,headers={'Referer':player},timeout=(10,15));r.raise_for_status()
             if not r.text.lstrip().startswith('#EXTM3U'):continue
-            subtitle_info=dict(data.get('data') or {})
-            subtitle_info.update({key: value for key,value in (subtitle_data or {}).items() if value not in (None,'')})
-            if subtitle_info.get('imdb') and not subtitle_info.get('imdb_id'):
-                subtitle_info['imdb_id']=subtitle_info['imdb']
-            if subtitle_info.get('season') and subtitle_info.get('episode'):
-                release=str(subtitle_info.get('originaltitle') or subtitle_info.get('tvshowtitle') or subtitle_info.get('title') or subtitle_info.get('name') or '')
-                subtitle_info['file_name']=release+'.s%02de%02d' % (int(subtitle_info['season']),int(subtitle_info['episode']))
-            subtitle=embedded_subtitle(data,player) or opensubtitle(session,subtitle_info)
+            subtitle=embedded_subtitle(data,player)
             return play_url(session,r.url,player),subtitle
         except (ValueError,requests.RequestException):
             continue

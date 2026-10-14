@@ -21,9 +21,9 @@ Workflow-ът Build and publish Kodi repository генерира каталог�
 
 | Добавка | Версия |
 | --- | --- |
-| Filmi9 by Klutc | 1.2.10 |
-| FilmiZip by Klutc | 1.3.9 |
-| ZenoPlay by Klutc | 1.0.9 |
+| Filmi9 by Klutc | 1.2.11 |
+| FilmiZip by Klutc | 1.3.10 |
+| ZenoPlay by Klutc | 1.0.10 |
 | Find Stream URL (зависимост) | 2026.10.14.02 |
 
 Видео добавките се намират в **Install from repository → klutc Repo → Video add-ons**.

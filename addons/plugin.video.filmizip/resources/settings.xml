@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings version="1">
   <section id="plugin.video.filmizip">
-    <category id="playback" label="Възпроизвеждане">
+    <category id="playback" label="30000">
       <group id="1">
-        <setting id="voe_mp4" type="boolean" label="VOE: директен MP4 поток на Android" help="Използва MP4 вместо HLS на Android TV, когато хостът го предоставя. Изключете за HLS.">
+        <setting id="voe_mp4" type="boolean" label="30001" help="30002">
           <level>0</level>
           <default>true</default>
           <control type="toggle" />

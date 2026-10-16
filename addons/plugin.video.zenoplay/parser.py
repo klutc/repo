@@ -80,6 +80,10 @@ def metadata(html, url):
         name = title
         media_type = 'tvshow' if urlsplit(url).path.startswith('/tv-show/') else 'movie'
     summary = soup.select_one('.detail-overview, .detail-description, .detail-plot')
+    country_node = soup.select_one('.detail-country')
+    country_text = country_node.get_text(' ', strip=True) if country_node else ''
+    country_text = re.sub(r'^(?:country|countries|държава|страна)\s*:\s*', '', country_text, flags=re.I).strip()
+    countries = [part.strip() for part in re.split(r'\s*,\s*', country_text) if part.strip()]
     poster = soup.select_one('.detail-poster img, img.detail-poster')
     if not poster:
         poster = soup.select_one('meta[property="og:image"]')
@@ -126,7 +130,7 @@ def metadata(html, url):
                                      title=row.get('data-title') or row.get_text(' ', strip=True),
                                      plot=row.get('data-overview', '')))
     return dict(name=name, title=title or name, url=url, plot=summary.get_text(' ', strip=True) if summary else '',
-                icon=icon, year=int(year_match[1]) if year_match else 0, genres=genre,
+                icon=icon, year=int(year_match[1]) if year_match else 0, genres=genre, countries=countries,
                 fanart='', originaltitle=original or show_title or name, imdb=imdb,
                 rating=0, media_type=media_type, tmdb=tmdb, post_id=post_id, token=token,
                 season=season, episode=epno, episodes=episodes, bg_audio=bg_audio,

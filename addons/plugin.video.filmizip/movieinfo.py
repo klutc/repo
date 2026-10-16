@@ -14,6 +14,7 @@ class MovieInfo(xbmcgui.WindowXMLDialog):
         self.getControl(102).setLabel(movie_label(data.get('name') or data.get('title',''),data.get('year',0)))
         self.getControl(103).setLabel('Година: ' + (str(data['year']) if data.get('year') else '—'))
         self.getControl(104).setLabel('Жанр: ' + (' / '.join(data.get('genres',[])) or '—'))
+        self.getControl(106).setLabel('Държава: ' + (' / '.join(data.get('countries',[])) or '—'))
         self.getControl(105).setText(data.get('plot') or 'Няма налично резюме.')
         self.getControl(10).setLabel(self.action_label if self.allow_sources else 'Затвори')
 

@@ -90,9 +90,13 @@ def normalize(movie):
         if match:year=int(match[1])
     name=re.sub(r'\s*\('+str(year)+r'\)\s*$', '',name).strip()
     route='serial/' if movie.get('type')=='series' else 'film/'
+    countries = [str(c.get('name') or c.get('iso_3166_1') or '').strip() if isinstance(c,dict) else str(c).strip()
+                 for c in movie.get('countries',[]) or []]
+    countries = [country for country in countries if country]
     return dict(name=name,title=name,url=urljoin(BASE,route+movie['slug']),plot=movie.get('description') or '',
                 icon=movie.get('movieImage') or '',fanart=movie.get('coverPhoto') or '',year=year,
                 genres=[g['name'] if isinstance(g,dict) else str(g) for g in movie.get('genres',[])],
+                countries=countries,
                 duration=int(float(movie.get('movieLength') or 0)*60),originaltitle=movie.get('original_title') or title.split('/')[0].strip(),
                 imdb=movie.get('imdb_id') or '',rating=float(movie.get('rating') or 0),media_type='tvshow' if movie.get('type')=='series' else 'movie')
 

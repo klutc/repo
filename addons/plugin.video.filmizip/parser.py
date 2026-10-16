@@ -41,6 +41,7 @@ def metadata(html, url):
     year_link = soup.select_one('.pmovie__quality a[href*="/year/"]')
     year = re.search(r'\b(19\d{2}|20\d{2})\b', year_link.get_text() if year_link else '')
     genres = []
+    actors = []
     countries = []
     for row in soup.select('.pmovie__header-row'):
         label = row.select_one('.pmovie__header-label')
@@ -54,6 +55,12 @@ def metadata(html, url):
             value = row.select_one('.pmovie__header-data')
             text = value.get_text(' ', strip=True) if value else ''
             countries = [part.strip() for part in re.split(r'\s*,\s*', text) if part.strip()]
+        elif kind in ('актьори', 'актьорски състав', 'актеры', 'актерский состав'):
+            actors = values
+            if not actors:
+                value = row.select_one('.pmovie__header-data')
+                text = value.get_text(' ', strip=True) if value else ''
+                actors = [part.strip() for part in re.split(r'\s*,\s*', text) if part.strip()]
     backdrop = re.search(r'var\s+backdrop\s*=\s*[\"\']([^\"\']+)', html)
     duration = re.search(r'(\d+)\s*мин', quality.get_text(' ',strip=True) if quality else '')
     originaltitle = original.get_text(strip=True).lstrip('/').strip() if original else ''
@@ -65,7 +72,7 @@ def metadata(html, url):
                 icon=urljoin(url,poster['src']) if poster else '',
                 title=title.get_text(' ',strip=True) if title else '',
                 originaltitle=originaltitle,imdb=imdb_match.group(1) if imdb_match else '',
-                year=int(year[0]) if year else 0,genres=genres,countries=countries,
+                year=int(year[0]) if year else 0,genres=genres,countries=countries,actors=actors,
                 fanart=urljoin(url,backdrop[1]) if backdrop else '',
                 duration=int(duration[1])*60 if duration else 0)
 

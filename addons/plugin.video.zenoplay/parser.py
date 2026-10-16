@@ -130,7 +130,7 @@ def metadata(html, url):
                                      title=row.get('data-title') or row.get_text(' ', strip=True),
                                      plot=row.get('data-overview', '')))
     return dict(name=name, title=title or name, url=url, plot=summary.get_text(' ', strip=True) if summary else '',
-                icon=icon, year=int(year_match[1]) if year_match else 0, genres=genre, countries=countries,
+                icon=icon, year=int(year_match[1]) if year_match else 0, genres=genre, countries=countries, actors=[],
                 fanart='', originaltitle=original or show_title or name, imdb=imdb,
                 rating=0, media_type=media_type, tmdb=tmdb, post_id=post_id, token=token,
                 season=season, episode=epno, episodes=episodes, bg_audio=bg_audio,

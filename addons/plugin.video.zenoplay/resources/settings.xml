@@ -10,5 +10,15 @@
         </setting>
       </group>
     </category>
+    <category id="metadata" label="Информация за филмите">
+      <group id="1">
+        <setting id="tmdb_read_token" type="string" label="TMDb API Read Access Token" help="Нужен е за актьорския състав в ZenoPlay. Заявките се кешират за 7 дни.">
+          <level>0</level>
+          <default></default>
+          <constraints><allowempty>true</allowempty></constraints>
+          <control type="edit" format="string"><heading>TMDb API Read Access Token</heading><hidden>true</hidden></control>
+        </setting>
+      </group>
+    </category>
   </section>
 </settings>

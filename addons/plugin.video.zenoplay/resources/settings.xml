@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings version="1">
   <section id="plugin.video.zenoplay">
-    <category id="playback" label="Възпроизвеждане">
+    <category id="playback" label="30000">
       <group id="1">
-        <setting id="voe_mp4" type="boolean" label="VOE: директен MP4 поток на Android" help="Използва MP4 вместо HLS на Android TV, когато хостът го предоставя. Изключете за HLS.">
+        <setting id="voe_mp4" type="boolean" label="30001" help="30002">
           <level>0</level>
           <default>true</default>
           <control type="toggle" />
         </setting>
       </group>
     </category>
-    <category id="metadata" label="Информация за филмите">
+    <category id="metadata" label="30010">
       <group id="1">
-        <setting id="tmdb_cast_enabled" type="boolean" label="Показвай актьорския състав от TMDb" help="Когато е включено и е зададен API Read Access Token, ZenoPlay зарежда актьорския състав от TMDb.">
+        <setting id="tmdb_cast_enabled" type="boolean" label="30011" help="30012">
           <level>0</level>
           <default>false</default>
           <control type="toggle" />
         </setting>
-        <setting id="tmdb_read_token" type="string" label="TMDb API Read Access Token" help="Нужен е за актьорския състав в ZenoPlay. Заявките се кешират за 7 дни.">
+        <setting id="tmdb_read_token" type="string" label="30013" help="30014">
           <level>0</level>
           <default></default>
           <constraints><allowempty>true</allowempty></constraints>
-          <control type="edit" format="string"><heading>TMDb API Read Access Token</heading><hidden>true</hidden></control>
+          <control type="edit" format="string"><heading>30013</heading><hidden>true</hidden></control>
         </setting>
       </group>
     </category>

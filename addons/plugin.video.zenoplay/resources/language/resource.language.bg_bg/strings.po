@@ -1,0 +1,42 @@
+# Kodi Add-on Name: ZenoPlay by Klutc
+# Add-on id: plugin.video.zenoplay
+# Add-on Provider: Klutc
+msgid ""
+msgstr ""
+"Project-Id-Version: plugin.video.zenoplay\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "#30000"
+msgid "Възпроизвеждане"
+msgstr "Възпроизвеждане"
+
+msgctxt "#30001"
+msgid "VOE: директен MP4 поток на Android"
+msgstr "VOE: директен MP4 поток на Android"
+
+msgctxt "#30002"
+msgid "Използва MP4 вместо HLS на Android TV, когато хостът го предоставя. Изключете за HLS."
+msgstr "Използва MP4 вместо HLS на Android TV, когато хостът го предоставя. Изключете за HLS."
+
+msgctxt "#30010"
+msgid "Информация за филмите"
+msgstr "Информация за филмите"
+
+msgctxt "#30011"
+msgid "Показвай актьорския състав от TMDb"
+msgstr "Показвай актьорския състав от TMDb"
+
+msgctxt "#30012"
+msgid "Когато е включено и е зададен API Read Access Token, ZenoPlay зарежда актьорския състав от TMDb."
+msgstr "Когато е включено и е зададен API Read Access Token, ZenoPlay зарежда актьорския състав от TMDb."
+
+msgctxt "#30013"
+msgid "TMDb API Read Access Token"
+msgstr "TMDb API Read Access Token"
+
+msgctxt "#30014"
+msgid "Нужен е за актьорския състав в ZenoPlay. Заявките се кешират за 7 дни."
+msgstr "Нужен е за актьорския състав в ZenoPlay. Заявките се кешират за 7 дни."
+

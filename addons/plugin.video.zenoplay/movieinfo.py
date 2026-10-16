@@ -18,7 +18,9 @@ class MovieInfo(xbmcgui.WindowXMLDialog):
         actors = data.get('actors') or []
         actors = [str(actor.get('name') or '') if isinstance(actor, dict) else str(actor) for actor in actors]
         actors = [actor for actor in actors if actor]
-        self.getControl(107).setText('Актьори: ' + (', '.join(actors) or '—'))
+        self.getControl(107).setVisible(bool(actors))
+        if actors:
+            self.getControl(107).setText('Актьори: ' + ', '.join(actors))
         self.getControl(105).setText(data.get('plot') or 'Няма налично резюме.')
         self.getControl(10).setLabel(self.action_label if self.allow_sources else 'Затвори')
 

@@ -12,6 +12,11 @@
     </category>
     <category id="metadata" label="Информация за филмите">
       <group id="1">
+        <setting id="tmdb_cast_enabled" type="boolean" label="Показвай актьорския състав от TMDb" help="Когато е включено и е зададен API Read Access Token, ZenoPlay зарежда актьорския състав от TMDb.">
+          <level>0</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
         <setting id="tmdb_read_token" type="string" label="TMDb API Read Access Token" help="Нужен е за актьорския състав в ZenoPlay. Заявките се кешират за 7 дни.">
           <level>0</level>
           <default></default>

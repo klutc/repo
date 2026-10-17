@@ -29,25 +29,40 @@ HISTORY_PATH = os.path.join(PROFILE, 'search_history.json')
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36'
 
 
-def search_history():
+def search_history(media_type):
     try:
         with open(HISTORY_PATH, 'r', encoding='utf-8') as history_file:
             data = json.load(history_file)
-        return [query for query in data if isinstance(query, str) and query.strip()][:10] if isinstance(data, list) else []
+        if isinstance(data, list):
+            # Older versions kept one shared list. Carry it forward into both
+            # types so existing searches remain available after the upgrade.
+            data = {'movie': data, 'series': data}
+        values = data.get(media_type, []) if isinstance(data, dict) else []
+        return [query for query in values if isinstance(query, str) and query.strip()][:10]
     except (OSError, ValueError, TypeError):
         return []
 
 
-def save_search(query):
+def save_search(query, media_type):
     query = query.strip()
     if not query:
         return
-    history = [old for old in search_history() if old.casefold() != query.casefold()]
+    try:
+        with open(HISTORY_PATH, 'r', encoding='utf-8') as history_file:
+            data = json.load(history_file)
+    except (OSError, ValueError, TypeError):
+        data = {}
+    if isinstance(data, list):
+        data = {'movie': data, 'series': data}
+    if not isinstance(data, dict):
+        data = {}
+    history = [old for old in search_history(media_type) if old.casefold() != query.casefold()]
     history.insert(0, query)
+    data[media_type] = history[:10]
     try:
         os.makedirs(PROFILE, exist_ok=True)
         with open(HISTORY_PATH, 'w', encoding='utf-8') as history_file:
-            json.dump(history[:10], history_file, ensure_ascii=False)
+            json.dump(data, history_file, ensure_ascii=False)
     except OSError as error:
         xbmc.log('Klutc Movies search history: ' + str(error), xbmc.LOGWARNING)
 
@@ -135,7 +150,7 @@ def main():
         new_search = urlencode({'action': 'search_new', 'type': media_type})
         xbmcplugin.addDirectoryItem(HANDLE, 'plugin://%s/?%s' % (ADDON_ID, new_search),
                                     xbmcgui.ListItem(label=ADDON.getLocalizedString(30006)), isFolder=True)
-        for query in search_history():
+        for query in search_history(media_type):
             target = 'plugin://%s/?%s' % (ADDON_ID, urlencode({'action': 'search_query', 'type': media_type, 'query': query}))
             xbmcplugin.addDirectoryItem(HANDLE, target, xbmcgui.ListItem(label=query), isFolder=True)
         xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
@@ -146,11 +161,11 @@ def main():
             media_type = 'movie'
         if action == 'search_new':
             title_id = 30012 if media_type == 'series' else 30005
-            query = xbmcgui.Dialog().input(ADDON.getLocalizedString(30007), heading=ADDON.getLocalizedString(title_id)).strip()
+            query = xbmcgui.Dialog().input(ADDON.getLocalizedString(title_id)).strip()
         else:
             query = params.get('query', '').strip()
         if query:
-            save_search(query)
+            save_search(query, media_type)
             show_search_results(query, media_type,
                                 params.get('source') if action == 'search_more' else None,
                                 params.get('url', '') if action == 'search_more' else '')

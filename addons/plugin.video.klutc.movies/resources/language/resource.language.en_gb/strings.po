@@ -25,7 +25,7 @@ msgid "Open this add-on catalogue."
 msgstr ""
 
 msgctxt "#30005"
-msgid "Search all add-ons"
+msgid "Search Movies"
 msgstr ""
 
 msgctxt "#30006"
@@ -33,7 +33,7 @@ msgid "New search…"
 msgstr ""
 
 msgctxt "#30007"
-msgid "Search for a movie or series"
+msgid "Enter a title"
 msgstr ""
 
 msgctxt "#30008"
@@ -50,5 +50,9 @@ msgstr ""
 
 msgctxt "#30011"
 msgid "More results"
+msgstr ""
+
+msgctxt "#30012"
+msgid "Search Series"
 msgstr ""
 

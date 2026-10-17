@@ -52,16 +52,18 @@ def save_search(query):
         xbmc.log('Klutc Movies search history: ' + str(error), xbmc.LOGWARNING)
 
 
-def show_search_results(query):
-    xbmcplugin.setContent(HANDLE, 'movies')
+def show_search_results(query, media_type='movie', only_source=None, page_url=''):
+    title_id = 30012 if media_type == 'series' else 30005
+    xbmcplugin.setContent(HANDLE, 'tvshows' if media_type == 'series' else 'movies')
     progress = xbmcgui.DialogProgressBG()
-    progress.create(ADDON.getLocalizedString(30005), ADDON.getLocalizedString(30009))
+    progress.create(ADDON.getLocalizedString(title_id), ADDON.getLocalizedString(30009))
     found = {}
     errors = {}
+    sources = [source for source in SOURCES if not only_source or source[1] == only_source]
     with ThreadPoolExecutor(max_workers=3) as pool:
         futures = {
-            pool.submit(search_sources, addon_id, query, USER_AGENT): addon_id
-            for _, addon_id, _ in SOURCES
+            pool.submit(search_sources, addon_id, query, USER_AGENT, media_type, page_url if only_source == addon_id else ''): addon_id
+            for _, addon_id, _ in sources
         }
         for completed, future in enumerate(as_completed(futures), 1):
             addon_id = futures[future]
@@ -74,7 +76,7 @@ def show_search_results(query):
     progress.close()
 
     count = 0
-    for _, addon_id, source_name in SOURCES:
+    for _, addon_id, source_name in sources:
         result = found.get(addon_id, {})
         for movie in result.get('items', []):
             title = str(movie.get('name') or movie.get('title') or '').strip()
@@ -105,8 +107,9 @@ def show_search_results(query):
             count += 1
         next_page = result.get('next_page')
         if next_page:
-            params = urlencode({'action': 'browse', 'url': next_page})
-            target = 'plugin://%s/?%s' % (addon_id, params)
+            params = urlencode({'action': 'search_more', 'type': media_type, 'query': query,
+                                'source': addon_id, 'url': next_page})
+            target = 'plugin://%s/?%s' % (ADDON_ID, params)
             item = xbmcgui.ListItem(label='%s — %s' % (ADDON.getLocalizedString(30011), source_name))
             icon = 'special://home/addons/%s/resources/icon.png' % addon_id
             item.setArt({'icon': icon, 'thumb': icon})
@@ -118,39 +121,49 @@ def show_search_results(query):
         message = ADDON.getLocalizedString(30008)
         if errors:
             message += '\n' + '\n'.join('%s: %s' % (SOURCE_NAMES[key], value) for key, value in errors.items())
-        xbmcgui.Dialog().ok(ADDON.getLocalizedString(30005), message)
+        xbmcgui.Dialog().ok(ADDON.getLocalizedString(title_id), message)
     elif errors:
-        xbmcgui.Dialog().notification(ADDON.getLocalizedString(30005), ADDON.getLocalizedString(30010), xbmcgui.NOTIFICATION_WARNING)
+        xbmcgui.Dialog().notification(ADDON.getLocalizedString(title_id), ADDON.getLocalizedString(30010), xbmcgui.NOTIFICATION_WARNING)
 
 
 def main():
     params = dict(parse_qsl(sys.argv[2].lstrip('?')))
     action = params.get('action', 'home')
     if action == 'search':
+        media_type = params.get('type', 'movie')
         xbmcplugin.setContent(HANDLE, 'files')
-        xbmcplugin.addDirectoryItem(HANDLE, 'plugin://%s/?action=search_new' % ADDON_ID,
+        new_search = urlencode({'action': 'search_new', 'type': media_type})
+        xbmcplugin.addDirectoryItem(HANDLE, 'plugin://%s/?%s' % (ADDON_ID, new_search),
                                     xbmcgui.ListItem(label=ADDON.getLocalizedString(30006)), isFolder=True)
         for query in search_history():
-            target = 'plugin://%s/?%s' % (ADDON_ID, urlencode({'action': 'search_query', 'query': query}))
+            target = 'plugin://%s/?%s' % (ADDON_ID, urlencode({'action': 'search_query', 'type': media_type, 'query': query}))
             xbmcplugin.addDirectoryItem(HANDLE, target, xbmcgui.ListItem(label=query), isFolder=True)
         xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
         return
-    if action in ('search_new', 'search_query'):
+    if action in ('search_new', 'search_query', 'search_more'):
+        media_type = params.get('type', 'movie')
+        if media_type not in ('movie', 'series'):
+            media_type = 'movie'
         if action == 'search_new':
-            query = xbmcgui.Dialog().input(ADDON.getLocalizedString(30007)).strip()
+            title_id = 30012 if media_type == 'series' else 30005
+            query = xbmcgui.Dialog().input(ADDON.getLocalizedString(30007), heading=ADDON.getLocalizedString(title_id)).strip()
         else:
             query = params.get('query', '').strip()
         if query:
             save_search(query)
-            show_search_results(query)
+            show_search_results(query, media_type,
+                                params.get('source') if action == 'search_more' else None,
+                                params.get('url', '') if action == 'search_more' else '')
         else:
             xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
         return
 
     xbmcplugin.setContent(HANDLE, 'videos')
-    search_item = xbmcgui.ListItem(label=ADDON.getLocalizedString(30005))
-    search_item.setArt({'icon': ADDON.getAddonInfo('icon'), 'thumb': ADDON.getAddonInfo('icon')})
-    xbmcplugin.addDirectoryItem(HANDLE, 'plugin://%s/?action=search' % ADDON_ID, search_item, isFolder=True)
+    for media_type, label_id in (('movie', 30005), ('series', 30012)):
+        search_item = xbmcgui.ListItem(label=ADDON.getLocalizedString(label_id))
+        search_item.setArt({'icon': ADDON.getAddonInfo('icon'), 'thumb': ADDON.getAddonInfo('icon')})
+        target = 'plugin://%s/?%s' % (ADDON_ID, urlencode({'action': 'search', 'type': media_type}))
+        xbmcplugin.addDirectoryItem(HANDLE, target, search_item, isFolder=True)
     for string_id, addon_id, name in SOURCES:
         target = 'plugin://%s/' % addon_id
         item = xbmcgui.ListItem(label=ADDON.getLocalizedString(int(string_id)))

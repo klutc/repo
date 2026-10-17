@@ -3,7 +3,7 @@ import importlib.util
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 import requests
 import xbmcaddon
@@ -44,9 +44,9 @@ def _fetch(url, user_agent, referer):
     return response
 
 
-def _search_filmizip(query, user_agent):
+def _search_filmizip(query, user_agent, page_url=''):
     parser = _load_parser('plugin.video.filmizip')
-    url = parser.BASE + 'index.php?' + urlencode({
+    url = page_url or parser.BASE + 'index.php?' + urlencode({
         'do': 'search', 'subaction': 'search', 'story': query,
     })
     response = _fetch(url, user_agent, parser.BASE)
@@ -54,20 +54,19 @@ def _search_filmizip(query, user_agent):
     return {'items': rows, 'next_page': next_page, 'search_url': url}
 
 
-def _search_filmi9(query, user_agent):
+def _search_filmi9(query, user_agent, page_url=''):
     parser = _load_parser('plugin.video.filmi9')
-    url = parser.search_url(query)
+    url = page_url or parser.search_url(query)
     response = _fetch(url, user_agent, parser.BASE)
     rows, next_page = parser.api_listing(response.json(), url)
     return {'items': rows, 'next_page': next_page, 'search_url': url}
 
 
-def _search_zenoplay(query, user_agent):
+def _search_zenoplay(query, user_agent, page_url=''):
     parser = _load_parser('plugin.video.zenoplay')
-    url = parser.search_url(query)
+    url = page_url or parser.search_url(query)
     response = _fetch(url, user_agent, parser.BASE)
     rows, next_page = parser.listing(response.text, url)
-    _mark_zenoplay_bg_audio(rows, parser, user_agent)
     return {'items': rows, 'next_page': next_page, 'search_url': url}
 
 
@@ -119,10 +118,25 @@ _SEARCHERS = {
 }
 
 
-def search_sources(addon_id, query, user_agent):
+def _is_series(addon_id, row):
+    path = urlsplit(str(row.get('url') or '')).path.lower()
+    media_type = str(row.get('media_type') or '').lower()
+    if addon_id == 'plugin.video.filmizip':
+        return '/seriali/' in path or '/serial/' in path or '/series/' in path
+    return media_type in ('tv', 'tvshow', 'series', 'episode') or '/tv-show/' in path or '/serial/' in path
+
+
+def search_sources(addon_id, query, user_agent, media_type='movie', page_url=''):
     """Return normalized movie rows from one site's existing parser."""
     if addon_id not in _ADDON_IDS:
         raise ValueError('Непознат видео източник: ' + addon_id)
-    result = _SEARCHERS[addon_id](query.strip(), user_agent)
-    result['items'] = [row for row in result['items'] if isinstance(row, dict) and row.get('url')]
+    if media_type not in ('movie', 'series'):
+        raise ValueError('Непознат вид търсене: ' + str(media_type))
+    result = _SEARCHERS[addon_id](query.strip(), user_agent, page_url)
+    result['items'] = [row for row in result['items']
+                       if isinstance(row, dict) and row.get('url')
+                       and (_is_series(addon_id, row) == (media_type == 'series'))]
+    if addon_id == 'plugin.video.zenoplay':
+        parser = _load_parser(addon_id)
+        _mark_zenoplay_bg_audio(result['items'], parser, user_agent)
     return result

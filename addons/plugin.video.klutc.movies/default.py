@@ -82,18 +82,25 @@ def show_search_results(query):
             if not title or not url:
                 continue
             year = movie.get('year') or 0
-            label = '%s (%s) — %s' % (title, year, source_name) if year else '%s — %s' % (title, source_name)
-            params = urlencode({'action': 'detail', 'url': url, 'name': title})
+            is_bg_audio = addon_id == 'plugin.video.zenoplay' and bool(movie.get('bg_audio'))
+            display_title = '[BG] ' + title if is_bg_audio else title
+            label = '%s (%s) — %s' % (display_title, year, source_name) if year else '%s — %s' % (display_title, source_name)
+            item_params = {'action': 'detail', 'url': url, 'name': title}
+            if is_bg_audio:
+                item_params['bg_audio'] = '1'
+            params = urlencode(item_params)
             target = 'plugin://%s/?%s' % (addon_id, params)
             item = xbmcgui.ListItem(label=label)
             icon = movie.get('icon') or ''
             item.setArt({'icon': icon, 'thumb': icon, 'poster': icon, 'fanart': movie.get('fanart') or ''})
             item.setInfo('video', {
-                'title': title,
+                'title': display_title,
                 'year': int(year) if str(year).isdigit() else 0,
                 'plot': movie.get('plot') or '',
                 'mediatype': movie.get('media_type') or 'movie',
             })
+            if is_bg_audio:
+                item.setProperty('FilmDisplayTitle', display_title)
             xbmcplugin.addDirectoryItem(HANDLE, target, item, isFolder=True)
             count += 1
         next_page = result.get('next_page')

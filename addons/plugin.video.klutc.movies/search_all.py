@@ -1,6 +1,8 @@
 """Search the three Klutc video add-ons using their existing site parsers."""
 import importlib.util
+import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlencode
 
 import requests
@@ -65,7 +67,49 @@ def _search_zenoplay(query, user_agent):
     url = parser.search_url(query)
     response = _fetch(url, user_agent, parser.BASE)
     rows, next_page = parser.listing(response.text, url)
+    _mark_zenoplay_bg_audio(rows, parser, user_agent)
     return {'items': rows, 'next_page': next_page, 'search_url': url}
+
+
+def _mark_zenoplay_bg_audio(rows, parser, user_agent):
+    """Match ZenoPlay's normal listing behavior and share its membership cache."""
+    profile = xbmcvfs.translatePath(xbmcaddon.Addon('plugin.video.zenoplay').getAddonInfo('profile'))
+    cache_path = os.path.join(profile, 'bg_audio_cache.json')
+    try:
+        with open(cache_path, 'r', encoding='utf-8') as cache_file:
+            cache = json.load(cache_file)
+        if not isinstance(cache, dict):
+            cache = {}
+    except (OSError, ValueError, TypeError):
+        cache = {}
+
+    pending = [row for row in rows if row.get('url') and not row.get('bg_audio') and row['url'] not in cache]
+
+    def read_membership(row):
+        response = _fetch(row['url'], user_agent, parser.BASE)
+        return row['url'], parser.is_bg_audio(response.text)
+
+    changed = False
+    if pending:
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            futures = [pool.submit(read_membership, row) for row in pending]
+            for future in as_completed(futures):
+                try:
+                    url, is_bg = future.result()
+                    cache[url] = is_bg
+                    changed = True
+                except Exception:
+                    # A failed metadata lookup must not hide otherwise valid search results.
+                    continue
+    for row in rows:
+        row['bg_audio'] = bool(row.get('bg_audio') or cache.get(row.get('url'), False))
+    if changed:
+        try:
+            os.makedirs(profile, exist_ok=True)
+            with open(cache_path, 'w', encoding='utf-8') as cache_file:
+                json.dump(cache, cache_file, ensure_ascii=False)
+        except OSError:
+            pass
 
 
 _SEARCHERS = {

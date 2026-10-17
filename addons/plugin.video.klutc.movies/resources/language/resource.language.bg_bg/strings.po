@@ -1,0 +1,26 @@
+# Kodi Add-on Name: Klutc Movies
+# Add-on id: plugin.video.klutc.movies
+# Add-on Provider: Klutc
+msgid ""
+msgstr ""
+"Project-Id-Version: plugin.video.klutc.movies\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "#30001"
+msgid "FilmiZip"
+msgstr "FilmiZip"
+
+msgctxt "#30002"
+msgid "Filmi9"
+msgstr "Filmi9"
+
+msgctxt "#30003"
+msgid "ZenoPlay"
+msgstr "ZenoPlay"
+
+msgctxt "#30004"
+msgid "Отвори каталога на тази добавка."
+msgstr "Отвори каталога на тази добавка."
+

@@ -24,9 +24,10 @@ Workflow-ът Build and publish Kodi repository генерира каталог�
 | Filmi9 by Klutc | 1.2.14 |
 | FilmiZip by Klutc | 1.3.13 |
 | ZenoPlay by Klutc | 1.0.16 |
+| Klutc Movies (общ вход) | 1.0.0 |
 | Find Stream URL (зависимост) | 2026.10.14.02 |
 
-Видео добавките се намират в **Install from repository → klutc Repo → Video add-ons**.
+Видео добавките се намират в **Install from repository → klutc Repo → Video add-ons**. Klutc Movies е общ вход: отвори го и избери FilmiZip, Filmi9 или ZenoPlay; функциите и настройките на всяка добавка се запазват.
 Find Stream URL се инсталира като зависимост от това хранилище; Requests, Beautiful Soup, Six и Kodi Six се получават от официалното хранилище на Kodi.
 
 На Android TV Filmi9 използва нативен обработчик за Vidsrcme; Vsembed, VOE, VIDM, PlayM и FMoon/Byse също имат директни обработчици без Chrome. При епизодите Kodi получава оригиналното заглавие на сериала, IMDb ID, сезона и епизода, така че добавките за външни субтитри могат да търсят при поискване. Видео добавките зареждат субтитрите, предоставени от избрания видеоизточник, без автоматично да ги заменят с резултат от OpenSubtitles. При FMoon/Byse първата автоматична проверка може да отнеме няколко минути. VOE предпочита MP4 на Android (променя се от настройките). Upbolt засега е блокиран от Cloudflare. Подробности и ограничения има в ANDROID.txt на всяка видео добавка.

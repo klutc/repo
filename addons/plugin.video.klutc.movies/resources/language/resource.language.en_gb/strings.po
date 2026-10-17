@@ -24,3 +24,31 @@ msgctxt "#30004"
 msgid "Open this add-on catalogue."
 msgstr ""
 
+msgctxt "#30005"
+msgid "Search all add-ons"
+msgstr ""
+
+msgctxt "#30006"
+msgid "New search…"
+msgstr ""
+
+msgctxt "#30007"
+msgid "Search for a movie or series"
+msgstr ""
+
+msgctxt "#30008"
+msgid "No matching titles were found."
+msgstr ""
+
+msgctxt "#30009"
+msgid "Searching all three sites…"
+msgstr ""
+
+msgctxt "#30010"
+msgid "Some sites could not be reached."
+msgstr ""
+
+msgctxt "#30011"
+msgid "More results"
+msgstr ""
+

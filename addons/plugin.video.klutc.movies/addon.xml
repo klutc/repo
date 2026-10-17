@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.klutc.movies" name="Klutc Movies" version="1.0.0" provider-name="Klutc">
+<addon id="plugin.video.klutc.movies" name="Klutc Movies" version="1.1.0" provider-name="Klutc">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="plugin.video.filmizip" version="1.3.13" />
@@ -9,9 +9,9 @@
   <extension point="xbmc.python.pluginsource" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
     <summary lang="bg">Трите видео добавки на Klutc на едно място</summary>
-    <description lang="bg">Общ вход към FilmiZip, Filmi9 и ZenoPlay. Всеки сайт запазва своя каталог, източници и настройки.</description>
+    <description lang="bg">Общо търсене във FilmiZip, Filmi9 и ZenoPlay, както и отделен достъп до каталога на всеки сайт.</description>
     <summary lang="en_GB">Klutc's three video add-ons in one place</summary>
-    <description lang="en_GB">A shared entry point for FilmiZip, Filmi9 and ZenoPlay. Each site keeps its own catalogue, sources and settings.</description>
+    <description lang="en_GB">Search FilmiZip, Filmi9 and ZenoPlay together, or open each site catalogue separately.</description>
     <platform>all</platform>
     <license>MIT</license>
     <language>bg</language>

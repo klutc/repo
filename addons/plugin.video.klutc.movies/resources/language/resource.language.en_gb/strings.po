@@ -56,3 +56,11 @@ msgctxt "#30012"
 msgid "Search Series"
 msgstr ""
 
+msgctxt "#30013"
+msgid "Delete this search"
+msgstr ""
+
+msgctxt "#30014"
+msgid "Clear search history"
+msgstr ""
+

@@ -43,28 +43,46 @@ def search_history(media_type):
         return []
 
 
-def save_search(query, media_type):
-    query = query.strip()
-    if not query:
-        return
+def _read_history_data():
     try:
         with open(HISTORY_PATH, 'r', encoding='utf-8') as history_file:
             data = json.load(history_file)
+        if isinstance(data, list):
+            return {'movie': data, 'series': data}
+        return data if isinstance(data, dict) else {}
     except (OSError, ValueError, TypeError):
-        data = {}
-    if isinstance(data, list):
-        data = {'movie': data, 'series': data}
-    if not isinstance(data, dict):
-        data = {}
-    history = [old for old in search_history(media_type) if old.casefold() != query.casefold()]
-    history.insert(0, query)
-    data[media_type] = history[:10]
+        return {}
+
+
+def _write_history_data(data):
     try:
         os.makedirs(PROFILE, exist_ok=True)
         with open(HISTORY_PATH, 'w', encoding='utf-8') as history_file:
             json.dump(data, history_file, ensure_ascii=False)
     except OSError as error:
         xbmc.log('Klutc Movies search history: ' + str(error), xbmc.LOGWARNING)
+
+
+def save_search(query, media_type):
+    query = query.strip()
+    if not query:
+        return
+    data = _read_history_data()
+    history = [old for old in search_history(media_type) if old.casefold() != query.casefold()]
+    history.insert(0, query)
+    data[media_type] = history[:10]
+    _write_history_data(data)
+
+
+def update_search_history(action, query, media_type):
+    data = _read_history_data()
+    if action == 'history_clear':
+        data[media_type] = []
+    elif action == 'history_delete':
+        data[media_type] = [old for old in data.get(media_type, [])
+                            if not isinstance(old, str) or old.casefold() != query.casefold()]
+    _write_history_data(data)
+    xbmc.executebuiltin('Container.Refresh')
 
 
 def show_search_results(query, media_type='movie', only_source=None, page_url=''):
@@ -152,8 +170,25 @@ def main():
                                     xbmcgui.ListItem(label=ADDON.getLocalizedString(30006)), isFolder=True)
         for query in search_history(media_type):
             target = 'plugin://%s/?%s' % (ADDON_ID, urlencode({'action': 'search_query', 'type': media_type, 'query': query}))
-            xbmcplugin.addDirectoryItem(HANDLE, target, xbmcgui.ListItem(label=query), isFolder=True)
+            item = xbmcgui.ListItem(label=query)
+            delete_target = 'plugin://%s/?%s' % (ADDON_ID, urlencode({
+                'action': 'history_delete', 'type': media_type, 'query': query,
+            }))
+            clear_target = 'plugin://%s/?%s' % (ADDON_ID, urlencode({
+                'action': 'history_clear', 'type': media_type,
+            }))
+            item.addContextMenuItems([
+                (ADDON.getLocalizedString(30013), 'RunPlugin(%s)' % delete_target),
+                (ADDON.getLocalizedString(30014), 'RunPlugin(%s)' % clear_target),
+            ])
+            xbmcplugin.addDirectoryItem(HANDLE, target, item, isFolder=True)
         xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=False)
+        return
+    if action in ('history_delete', 'history_clear'):
+        media_type = params.get('type', 'movie')
+        if media_type not in ('movie', 'series'):
+            media_type = 'movie'
+        update_search_history(action, params.get('query', ''), media_type)
         return
     if action in ('search_new', 'search_query', 'search_more'):
         media_type = params.get('type', 'movie')

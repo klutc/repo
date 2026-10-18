@@ -10,6 +10,7 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 import resolveurl
+from resolveurl import android_bridge
 import native_resolver
 import browser
 import hosts
@@ -210,10 +211,7 @@ def play(p):
     try:
         try:
             host_name = (urlsplit(host).hostname or '').lower()
-            if xbmc.getCondVisibility('System.Platform.Android') and any(
-                    host_name == domain or host_name.endswith('.' + domain)
-                    for domain in ('myvidplay.com', 'playmogo.com')):
-                import android_bridge
+            if xbmc.getCondVisibility('System.Platform.Android') and android_bridge.supports_url(host):
                 result = android_bridge.resolve(host)
             elif urlsplit(host).path.endswith(('.m3u8','.mp4','/master.txt')):
                 result=(host+'|'+urlencode({'User-Agent':SESSION.headers['User-Agent'],'Referer':p['url']}),'')
@@ -228,7 +226,10 @@ def play(p):
                 raise ValueError('Не е намерен видеоадрес.')
         except Exception as error:
             if progress.iscanceled():raise
-            if xbmc.getCondVisibility('System.Platform.Android'):
+            if (xbmc.getCondVisibility('System.Platform.Android') and
+                    android_bridge.is_vidsrc_embed_url(host) and android_bridge.is_cloudflare_error(error)):
+                result = android_bridge.resolve(host)
+            elif xbmc.getCondVisibility('System.Platform.Android'):
                 if isinstance(error,requests.exceptions.SSLError):
                     message='Неуспешна проверка на HTTPS сертификата. Проверете датата на телевизора и обновете Kodi.'
                 elif isinstance(error,requests.exceptions.HTTPError):

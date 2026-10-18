@@ -13,6 +13,7 @@ import xbmcgui
 import xbmcplugin
 import xbmcvfs
 import resolveurl
+from resolveurl import android_bridge
 import native_resolver
 import browser
 import hosts
@@ -256,6 +257,8 @@ def resolve(source, page_url, source_name, episode=''):
     host = urlsplit(source).hostname or ''
     if host.lower().removeprefix('www.') in ('galaxicon.org', 'playtube.tv', 'rollo.uno'):
         return bgplayer.resolve(SESSION, source, page_url)
+    if xbmc.getCondVisibility('System.Platform.Android') and android_bridge.supports_url(source):
+        return android_bridge.resolve(source)
     if urlsplit(source).path.lower().endswith(('.m3u8', '.mp4', '/master.txt')):
         return source + '|' + urlencode({'User-Agent': SESSION.headers['User-Agent'], 'Referer': page_url}), ''
     if host in ('playmate.to', 'www.playmate.to'):
@@ -267,6 +270,9 @@ def resolve(source, page_url, source_name, episode=''):
         try:
             return resolveurl.resolve(source)
         except Exception as error:
+            if (xbmc.getCondVisibility('System.Platform.Android') and
+                    android_bridge.is_vidsrc_embed_url(source) and android_bridge.is_cloudflare_error(error)):
+                return android_bridge.resolve(source)
             if xbmc.getCondVisibility('System.Platform.Android'):
                 raise ValueError('Този видеоизточник не поддържа нативно възпроизвеждане на Android TV: ' + str(error)) from error
             return browser.resolve(source, page_url=page_url, source=source_name, episode=episode)

@@ -1,14 +1,40 @@
-"""Android WebView hand-off for browser-only MyVidPlay checks."""
+"""Android WebView hand-off for video hosts with browser-managed checks."""
 import json
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 import xbmc
 import xbmcgui
 
 HELPER_PACKAGE = 'org.klutc.myvidplaybridge'
+HOST_DOMAINS = (
+    'myvidplay.com', 'playmogo.com', 'upbolt.to', 'upbolt.com',
+    'streamtape.com', 'strtape.cloud', 'streamtape.net', 'streamta.pe', 'streamtape.site',
+    'strcloud.link', 'strtpe.link', 'streamtape.cc', 'scloud.online', 'stape.fun',
+    'streamadblockplus.com', 'shavetape.cash', 'streamtape.to', 'streamta.site', 'streamadblocker.xyz',
+)
+VIDSRC_DOMAINS = ('vidsrc-embed.ru', 'vidsrc.me', 'vidsrc.sh', 'vidsrcme.ru')
+
+
+def supports_url(url):
+    parsed = urlsplit(url)
+    host = (parsed.hostname or '').lower().rstrip('.')
+    return parsed.scheme == 'https' and any(host == domain or host.endswith('.' + domain)
+                                            for domain in HOST_DOMAINS)
+
+
+def is_vidsrc_embed_url(url):
+    parsed = urlsplit(url)
+    host = (parsed.hostname or '').lower().rstrip('.')
+    return parsed.scheme == 'https' and any(host == domain or host.endswith('.' + domain)
+                                            for domain in VIDSRC_DOMAINS)
+
+
+def is_cloudflare_error(error):
+    message = str(error).lower()
+    return any(marker in message for marker in ('cloudflare', 'turnstile', 'cf-chl-', 'captcha-gate'))
 
 
 class _CallbackHandler(BaseHTTPRequestHandler):
@@ -34,14 +60,14 @@ class _CallbackHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Length', '0')
             self.end_headers()
         except Exception as error:
-            xbmc.log('Filmi2K Android bridge callback: ' + str(error), xbmc.LOGWARNING)
+            xbmc.log('Android WebView bridge callback: ' + str(error), xbmc.LOGWARNING)
             self.send_error(400)
 
     def log_message(self, fmt, *args):
         pass
 
 
-def resolve(url, timeout=120):
+def resolve(url, timeout=180):
     """Launch the companion WebView and wait for its media URL callback."""
     import secrets
 
@@ -54,16 +80,16 @@ def resolve(url, timeout=120):
     callback = 'http://127.0.0.1:%d/resolve/%s' % (server.server_port, token)
     intent_uri = 'klutcmyvidplay://resolve?' + urlencode({'url': url, 'callback': callback})
     progress = xbmcgui.DialogProgress()
-    progress.create('Filmi2K', 'Отваряне на MyVidPlay в Android WebView…')
+    progress.create('Video helper', 'Отваряне на видеоизточника в Android WebView…')
     try:
         xbmc.executebuiltin('StartAndroidActivity(%s,android.intent.action.VIEW,,%s)' % (HELPER_PACKAGE, intent_uri))
         started = time.monotonic()
         while not server.completed.is_set() and time.monotonic() - started < timeout:
             server.handle_request()
             percent = min(99, int((time.monotonic() - started) * 100 / timeout))
-            progress.update(percent, 'Ако се появи проверка, изпълни я и натисни Play в прозореца на MyVidPlay.')
+            progress.update(percent, 'Премини проверката, ако се появи. На Android TV натисни OK в центъра на плеъра.')
             if progress.iscanceled():
-                raise ValueError('Зареждането на MyVidPlay е отказано.')
+                raise ValueError('Зареждането на видеоизточника е отказано.')
         if not server.result:
             raise ValueError('Не получих видеоадрес от помощника. Провери дали MyVidPlay Bridge е инсталиран и дали страницата е заредила видеото.')
         address, headers = server.result

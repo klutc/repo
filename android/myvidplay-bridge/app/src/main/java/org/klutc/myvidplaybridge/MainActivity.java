@@ -46,7 +46,7 @@ public final class MainActivity extends Activity {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setBackgroundColor(Color.BLACK);
         TextView hint = new TextView(this);
-        hint.setText("MyVidPlay: натисни OK върху Play в средата на екрана. Ако се появи проверка, изпълни я. Връщането към Kodi става автоматично.");
+        hint.setText("Видеоизточник: премини проверката, ако се появи. Натисни OK в центъра на плеъра. Kodi ще продължи автоматично.");
         hint.setTextColor(Color.WHITE);
         hint.setTextSize(16);
         hint.setPadding(20, 14, 20, 14);
@@ -85,8 +85,17 @@ public final class MainActivity extends Activity {
             String host = uri.getHost();
             if (!"https".equalsIgnoreCase(uri.getScheme()) || host == null) return false;
             host = host.toLowerCase();
-            return host.equals("myvidplay.com") || host.endsWith(".myvidplay.com") ||
-                    host.equals("playmogo.com") || host.endsWith(".playmogo.com");
+            String[] domains = {
+                    "myvidplay.com", "playmogo.com", "upbolt.to", "upbolt.com",
+                    "streamtape.com", "strtape.cloud", "streamtape.net", "streamta.pe", "streamtape.site",
+                    "strcloud.link", "strtpe.link", "streamtape.cc", "scloud.online", "stape.fun",
+                    "streamadblockplus.com", "shavetape.cash", "streamtape.to", "streamta.site", "streamadblocker.xyz",
+                    "vidsrc-embed.ru", "vidsrc.me", "vidsrc.sh", "vidsrcme.ru"
+            };
+            for (String domain : domains) {
+                if (host.equals(domain) || host.endsWith("." + domain)) return true;
+            }
+            return false;
         } catch (Exception ignored) { return false; }
     }
 

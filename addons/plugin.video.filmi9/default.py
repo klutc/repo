@@ -10,6 +10,7 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 import resolveurl
+from resolveurl import android_bridge
 import native_resolver
 import browser
 import hosts
@@ -209,7 +210,9 @@ def play(p):
         return progress.iscanceled()
     try:
         try:
-            if urlsplit(host).path.endswith(('.m3u8','.mp4','/master.txt')):
+            if xbmc.getCondVisibility('System.Platform.Android') and android_bridge.supports_url(host):
+                result = android_bridge.resolve(host)
+            elif urlsplit(host).path.endswith(('.m3u8','.mp4','/master.txt')):
                 result=(host+'|'+urlencode({'User-Agent':SESSION.headers['User-Agent'],'Referer':p['url']}),'')
             elif urlsplit(host).hostname in ('playmate.to', 'www.playmate.to'):
                 result = hosts.playmate(SESSION, host)
@@ -222,7 +225,10 @@ def play(p):
                 raise ValueError('Не е намерен видеоадрес.')
         except Exception as error:
             if progress.iscanceled():raise
-            if xbmc.getCondVisibility('System.Platform.Android'):
+            if (xbmc.getCondVisibility('System.Platform.Android') and
+                    android_bridge.is_vidsrc_embed_url(host) and android_bridge.is_cloudflare_error(error)):
+                result = android_bridge.resolve(host)
+            elif xbmc.getCondVisibility('System.Platform.Android'):
                 if isinstance(error,requests.exceptions.SSLError):
                     message='Неуспешна проверка на HTTPS сертификата. Проверете датата на телевизора и обновете Kodi.'
                 elif isinstance(error,requests.exceptions.HTTPError):
@@ -231,8 +237,9 @@ def play(p):
                     message='Няма връзка с видео хоста. Проверете мрежата и DNS на телевизора.'
                 else:message=str(error) or 'Източникът не върна видеоадрес.'
                 raise ValueError(message+' Изберете друг източник или опитайте отново.') from error
-            xbmc.log('Filmi9: trying browser player for ' + host.split('?')[0], xbmc.LOGINFO)
-            result = browser.resolve(host, progress=update,page_url=p['url'],source=label,episode=p.get('episode',''))
+            else:
+                xbmc.log('Filmi9: trying browser player for ' + host.split('?')[0], xbmc.LOGINFO)
+                result = browser.resolve(host, progress=update,page_url=p['url'],source=label,episode=p.get('episode',''))
     finally:
         progress.close()
     if isinstance(result, (list, tuple)):

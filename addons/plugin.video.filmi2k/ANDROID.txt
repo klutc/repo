@@ -2,4 +2,5 @@ Filmi2K Kodi add-on
 
 - Catalogue pages, search, metadata and video embed URLs are read from the public Filmi2K website.
 - Playback relies on the installed Find Stream URL host resolvers. Availability varies by host and Android TV device.
+- MyVidPlay, Upbolt and StreamTape-family hosts can use the MyVidPlay Bridge WebView helper on Android to complete a visible browser check and return a direct media URL when available. VidSrcEmbed uses its native resolver first and opens the helper only if it reports a Cloudflare/Turnstile challenge.
 - The website's player provides one embed URL for each post at the time of implementation.

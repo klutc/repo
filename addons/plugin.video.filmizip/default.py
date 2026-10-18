@@ -209,10 +209,15 @@ def play(p):
         return progress.iscanceled()
     try:
         try:
-            if xbmc.getCondVisibility('System.Platform.Android') and android_bridge.supports_url(host):
-                # Keep the site player as the top-level origin. Providers such
-                # as Byse/FileMoon reject direct WebView opens without it.
-                result = android_bridge.resolve(wrapper)
+            host_name = (urlsplit(host).hostname or '').lower()
+            is_byse_native = (host_name.startswith('byse') or host_name in
+                              ('filemoon.sx', 'filemoon.to', 'filemoon.in', 'streamlyplayer.online'))
+            if (xbmc.getCondVisibility('System.Platform.Android') and
+                    android_bridge.supports_url(host) and not is_byse_native):
+                # Keep the WebView as a best-effort fallback for browser-only hosts.
+                # Byse/FileMoon has a native resolver that supplies the required
+                # embed-origin headers, so it must stay on that path on Android too.
+                result = android_bridge.resolve(host)
             elif urlsplit(host).hostname in ('playmate.to', 'www.playmate.to'):
                 result = hosts.playmate(SESSION, host)
             else:

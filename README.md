@@ -22,17 +22,17 @@ Workflow-ът Build and publish Kodi repository генерира каталог�
 | Добавка | Версия |
 | --- | --- |
 | Filmi9 by Klutc | 1.2.18 |
-| FilmiZip by Klutc | 1.3.20 |
+| FilmiZip by Klutc | 1.3.21 |
 | Filmi2K by Klutc | 1.0.6 |
 | ZenoPlay by Klutc | 1.0.20 |
-| Klutc Movies (общ вход и търсене) | 1.2.16 |
+| Klutc Movies (общ вход и търсене) | 1.2.17 |
 | Find Stream URL (зависимост) | 2026.10.19.02 |
 | ElementumOrg repository | 0.0.7 |
 
 Видео добавките се намират в **Install from repository → klutc Repo → Video add-ons**. Klutc Movies предлага отделно **Search Movies** и **Search Series** във FilmiZip, Filmi9, ZenoPlay и Filmi2K, както и отделен достъп до каталога на всеки сайт. В настройките на Klutc Movies можеш да изключиш сайтове от общото търсене и началното меню. Избраните заглавия се отварят в оригиналната добавка, така че функциите и настройките ѝ се запазват. Резултатите са обозначени с името на сайта; наличните следващи страници могат да се отворят от общия списък. За заглавия с БГ Аудио от ZenoPlay и Filmi2K се показва маркер [BG]. За да добавиш Elementum към Kodi, инсталирай **ElementumOrg repository** от **Install from repository → klutc Repo → Add-on repositories**, след което намери Elementum в ElementumOrg repository.
 Find Stream URL се инсталира като зависимост от това хранилище; Requests, Beautiful Soup, Six и Kodi Six се получават от официалното хранилище на Kodi.
 
-На Android TV Filmi9 използва нативен обработчик за Vidsrcme; Vsembed, VOE, VIDM и PlayM също имат директни обработчици. MyVidPlay, Upbolt, StreamTape, EMBE, CONT и FMoon/Byse имат експериментален WebView помощник: [изтегли MyVidPlayBridge-0.6.0.apk](https://klutc.github.io/repo/MyVidPlayBridge-0.6.0.apk) и го инсталирай на устройството преди да обновиш добавките. При FilmiZip помощникът отваря player страницата на сайта, за да запази контекста за разрешено вграждане. На Android TV натисни OK в центъра на плеъра, а ако отворят рекламна страница — върни се към плейъра. Kodi получава видеоадреса и субтитри, ако страницата ги предостави. VidSrcEmbed отваря помощника само когато нативният resolver засече Cloudflare/Turnstile. Потокът трябва да предоставя директен видеоадрес; DRM и скрити `blob:` потоци не се поддържат. CONT може да откаже пускане, ако мрежата или DNS блокира рекламните проверки на самия сайт.
+На Android TV Filmi9 използва нативен обработчик за Vidsrcme; Vsembed, VOE, VIDM и PlayM също имат директни обработчици. MyVidPlay, Upbolt и StreamTape имат експериментален WebView помощник: [изтегли MyVidPlayBridge-0.6.0.apk](https://klutc.github.io/repo/MyVidPlayBridge-0.6.0.apk) и го инсталирай на устройството преди да обновиш добавките. Kodi получава видеоадрес и субтитри само ако страницата ги предостави; WebView връзката с Upbolt остава нестабилна. FMoon/Byse използва нативен resolver, включително на Android. EMBE и CONT могат да откажат видео, ако рекламните им проверки са блокирани от мрежата/DNS; тези проверки не се заобикалят. DRM и скрити `blob:` потоци не се поддържат.
 
 При отваряне на филм бутонът „Пусни филма“ стартира първия източник; ако не работи, списъкът с източници остава достъпен. Иконите и прозорецът за информация са включени в пакетите; прозорецът показва година, жанр, държава, актьорски състав и резюме, когато източникът предоставя тези данни. Автоматичният информационен панел след 20 секунди използва отделна промяна на Confluence и не се инсталира чрез тези ZIP пакети. За ZenoPlay добави `resources/confluence-media-info.xml` към `MyVideoNav.xml` на Confluence, ако искаш този панел и за новата добавка.
 

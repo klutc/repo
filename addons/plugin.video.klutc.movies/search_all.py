@@ -1,4 +1,4 @@
-"""Search the three Klutc video add-ons using their existing site parsers."""
+"""Search the Klutc video add-ons using their existing site parsers."""
 import importlib.util
 import json
 import os
@@ -15,6 +15,7 @@ _ADDON_IDS = (
     'plugin.video.filmizip',
     'plugin.video.filmi9',
     'plugin.video.zenoplay',
+    'plugin.video.filmi2k',
 )
 
 
@@ -70,6 +71,14 @@ def _search_zenoplay(query, user_agent, page_url=''):
     return {'items': rows, 'next_page': next_page, 'search_url': url}
 
 
+def _search_filmi2k(query, user_agent, page_url=''):
+    parser = _load_parser('plugin.video.filmi2k')
+    url = page_url or parser.search_url(query)
+    response = _fetch(url, user_agent, parser.BASE)
+    rows, next_page = parser.listing(response.text, url)
+    return {'items': rows, 'next_page': next_page, 'search_url': url}
+
+
 def _mark_zenoplay_bg_audio(rows, parser, user_agent):
     """Match ZenoPlay's normal listing behavior and share its membership cache."""
     profile = xbmcvfs.translatePath(xbmcaddon.Addon('plugin.video.zenoplay').getAddonInfo('profile'))
@@ -115,6 +124,7 @@ _SEARCHERS = {
     'plugin.video.filmizip': _search_filmizip,
     'plugin.video.filmi9': _search_filmi9,
     'plugin.video.zenoplay': _search_zenoplay,
+    'plugin.video.filmi2k': _search_filmi2k,
 }
 
 
@@ -123,6 +133,8 @@ def _is_series(addon_id, row):
     media_type = str(row.get('media_type') or '').lower()
     if addon_id == 'plugin.video.filmizip':
         return '/seriali/' in path or '/serial/' in path or '/series/' in path
+    if addon_id == 'plugin.video.filmi2k':
+        return media_type in ('tv', 'tvshow', 'series', 'episode')
     return media_type in ('tv', 'tvshow', 'series', 'episode') or '/tv-show/' in path or '/serial/' in path
 
 

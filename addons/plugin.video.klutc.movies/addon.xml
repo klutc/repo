@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="plugin.video.klutc.movies" name="Klutc Movies" version="1.2.6" provider-name="Klutc">
+<addon id="plugin.video.klutc.movies" name="Klutc Movies" version="1.2.7" provider-name="Klutc">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.requests" version="1.1.0" />
     <import addon="script.module.beautifulsoup4" version="0.0.1" />
-    <import addon="plugin.video.filmizip" version="1.3.13" />
-    <import addon="plugin.video.filmi9" version="1.2.14" />
-    <import addon="plugin.video.zenoplay" version="1.0.16" />
+    <import addon="plugin.video.filmizip" version="1.3.17" />
+    <import addon="plugin.video.filmi9" version="1.2.16" />
+    <import addon="plugin.video.zenoplay" version="1.0.18" />
+    <import addon="plugin.video.filmi2k" version="1.0.0" />
   </requires>
   <extension point="xbmc.python.pluginsource" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
-    <summary lang="bg">Трите видео добавки на Klutc на едно място</summary>
-    <description lang="bg">Отделно търсене на филми и сериали във FilmiZip, Filmi9 и ZenoPlay, както и достъп до каталога на всеки сайт.</description>
-    <summary lang="en_GB">Klutc's three video add-ons in one place</summary>
-    <description lang="en_GB">Search movies or series across FilmiZip, Filmi9 and ZenoPlay, or open each site catalogue separately.</description>
+    <summary lang="bg">Видео добавките на Klutc на едно място</summary>
+    <description lang="bg">Отделно търсене на филми и сериали във FilmiZip, Filmi9, ZenoPlay и Filmi2K, както и достъп до каталога на всеки сайт.</description>
+    <summary lang="en_GB">Klutc's video add-ons in one place</summary>
+    <description lang="en_GB">Search movies or series across FilmiZip, Filmi9, ZenoPlay and Filmi2K, or open each site catalogue separately.</description>
     <platform>all</platform>
     <license>MIT</license>
     <language>bg</language>

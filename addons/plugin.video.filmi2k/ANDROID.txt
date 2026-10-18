@@ -1,0 +1,5 @@
+Filmi2K Kodi add-on
+
+- Catalogue pages, search, metadata and video embed URLs are read from the public Filmi2K website.
+- Playback relies on the installed Find Stream URL host resolvers. Availability varies by host and Android TV device.
+- The website's player provides one embed URL for each post at the time of implementation.

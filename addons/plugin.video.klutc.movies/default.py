@@ -22,6 +22,7 @@ SOURCES = [
     ('30001', 'plugin.video.filmizip', 'FilmiZip by Klutc'),
     ('30002', 'plugin.video.filmi9', 'Filmi9 by Klutc'),
     ('30003', 'plugin.video.zenoplay', 'ZenoPlay by Klutc'),
+    ('30015', 'plugin.video.filmi2k', 'Filmi2K by Klutc'),
 ]
 SOURCE_NAMES = {addon_id: name for _, addon_id, name in SOURCES}
 PROFILE = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
@@ -93,7 +94,7 @@ def show_search_results(query, media_type='movie', only_source=None, page_url=''
     found = {}
     errors = {}
     sources = [source for source in SOURCES if not only_source or source[1] == only_source]
-    with ThreadPoolExecutor(max_workers=3) as pool:
+    with ThreadPoolExecutor(max_workers=max(1, len(sources))) as pool:
         futures = {
             pool.submit(search_sources, addon_id, query, USER_AGENT, media_type, page_url if only_source == addon_id else ''): addon_id
             for _, addon_id, _ in sources
@@ -117,7 +118,7 @@ def show_search_results(query, media_type='movie', only_source=None, page_url=''
             if not title or not url:
                 continue
             year = movie.get('year') or 0
-            is_bg_audio = addon_id == 'plugin.video.zenoplay' and bool(movie.get('bg_audio'))
+            is_bg_audio = addon_id in ('plugin.video.zenoplay', 'plugin.video.filmi2k') and bool(movie.get('bg_audio'))
             display_title = '[BG] ' + title if is_bg_audio else title
             label = '%s (%s) — %s' % (display_title, year, source_name) if year else '%s — %s' % (display_title, source_name)
             item_params = {'action': 'detail', 'url': url, 'name': title}

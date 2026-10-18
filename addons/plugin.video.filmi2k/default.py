@@ -209,7 +209,13 @@ def play(p):
         return progress.iscanceled()
     try:
         try:
-            if urlsplit(host).path.endswith(('.m3u8','.mp4','/master.txt')):
+            host_name = (urlsplit(host).hostname or '').lower()
+            if xbmc.getCondVisibility('System.Platform.Android') and any(
+                    host_name == domain or host_name.endswith('.' + domain)
+                    for domain in ('myvidplay.com', 'playmogo.com')):
+                import android_bridge
+                result = android_bridge.resolve(host)
+            elif urlsplit(host).path.endswith(('.m3u8','.mp4','/master.txt')):
                 result=(host+'|'+urlencode({'User-Agent':SESSION.headers['User-Agent'],'Referer':p['url']}),'')
             elif urlsplit(host).hostname in ('playmate.to', 'www.playmate.to'):
                 result = hosts.playmate(SESSION, host)

@@ -89,6 +89,21 @@ def embedded_subtitle(data,base):
     return max(choices,key=lambda item:item[0])[1] if choices else ''
 
 
+def source_subtitle(query):
+    """Return a subtitle explicitly supplied by the parent site's player URL."""
+    urls=query.get('sub_url[]') or query.get('sub_url') or []
+    labels=query.get('sub_label[]') or query.get('sub_label') or []
+    if isinstance(urls,str):urls=[urls]
+    if isinstance(labels,str):labels=[labels]
+    choices=[]
+    for index,address in enumerate(urls):
+        if not address.startswith(('http://','https://','/')):continue
+        label=labels[index].lower() if index<len(labels) else ''
+        score=3 if label in ('bg','bul','bulgarian','български') or 'bulgar' in label or 'българ' in label else 0
+        choices.append((score,address))
+    return max(choices,key=lambda item:item[0])[1] if choices else ''
+
+
 def config(html,name):
     match=re.search(r'window\.'+name+r'\s*=\s*(\{[^\n]+?\})\s*;',html)
     if not match:raise ValueError('Vsembed не предоставя плейър за това видео.')
@@ -98,6 +113,7 @@ def config(html,name):
 def resolve(session,url,referer,progress=None):
     from native_resolver import fetch,play_url
     p=urlsplit(url);query=parse_qs(p.query)
+    supplied_subtitle=source_subtitle(query)
     if p.path.startswith('/embed/movie'):
         ident=(query.get('tmdb') or query.get('imdb') or [''])[0];media='movie'
     elif p.path.startswith('/embed/tv'):
@@ -130,7 +146,7 @@ def resolve(session,url,referer,progress=None):
             address=stream.replace('__TOKEN__',token) if '__TOKEN__' in stream else stream+('&' if '?' in stream else '?')+urlencode({'token':token}) if token else stream
             r=session.get(address,headers={'Referer':player},timeout=(10,15));r.raise_for_status()
             if not r.text.lstrip().startswith('#EXTM3U'):continue
-            subtitle=embedded_subtitle(data,player)
+            subtitle=supplied_subtitle or embedded_subtitle(data,player)
             return play_url(session,r.url,player),subtitle
         except (ValueError,requests.RequestException):
             continue

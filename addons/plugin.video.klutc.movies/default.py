@@ -197,6 +197,19 @@ def main():
         if action == 'search_new':
             title_id = 30012 if media_type == 'series' else 30005
             query = xbmcgui.Dialog().input(ADDON.getLocalizedString(title_id)).strip()
+            if query:
+                save_search(query, media_type)
+                results_url = 'plugin://%s/?%s' % (ADDON_ID, urlencode({
+                    'action': 'search_query', 'type': media_type, 'query': query,
+                }))
+                # Keep a stable search_query URL in Kodi's directory history.
+                # Otherwise Kodi can reopen search_new after playback and show
+                # the keyboard prompt again when returning to this listing.
+                xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
+                xbmc.executebuiltin('Container.Update(%s,replace)' % results_url)
+            else:
+                xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
+            return
         else:
             query = params.get('query', '').strip()
         if query:

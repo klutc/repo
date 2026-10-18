@@ -57,7 +57,7 @@ def build():
     (OUT / "addons.xml").write_bytes(payload)
     (OUT / "addons.xml.md5").write_text(hashlib.md5(payload).hexdigest(), encoding="ascii")
     (OUT / ".nojekyll").touch()
-    helper_apk = ROOT / "android" / "myvidplay-bridge" / "releases" / "MyVidPlayBridge-0.4.0.apk"
+    helper_apk = ROOT / "android" / "myvidplay-bridge" / "releases" / "MyVidPlayBridge-0.5.0.apk"
     if helper_apk.is_file():
         shutil.copy2(helper_apk, OUT / helper_apk.name)
     # Put the repository installer ZIP at the web root and use an Apache-style

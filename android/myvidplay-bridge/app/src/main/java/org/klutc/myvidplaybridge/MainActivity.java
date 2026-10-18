@@ -31,6 +31,11 @@ public final class MainActivity extends Activity {
     private String callback;
     private String userAgent;
     private String referer;
+    private volatile String mediaUrl;
+    private volatile Map<String, String> mediaHeaders;
+    private volatile String subtitleUrl = "";
+    private volatile Map<String, String> subtitleHeaders;
+    private final AtomicBoolean deliveryScheduled = new AtomicBoolean(false);
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -90,7 +95,8 @@ public final class MainActivity extends Activity {
                     "streamtape.com", "strtape.cloud", "streamtape.net", "streamta.pe", "streamtape.site",
                     "strcloud.link", "strtpe.link", "streamtape.cc", "scloud.online", "stape.fun",
                     "streamadblockplus.com", "shavetape.cash", "streamtape.to", "streamta.site", "streamadblocker.xyz",
-                    "vidsrc-embed.ru", "vidsrc.me", "vidsrc.sh", "vidsrcme.ru"
+                    "vidsrc-embed.ru", "vidsrc.me", "vidsrc.sh", "vidsrcme.ru",
+                    "embedorigin.cc", "content.st", "bysefujedu.com"
             };
             for (String domain : domains) {
                 if (host.equals(domain) || host.endsWith("." + domain)) return true;
@@ -110,7 +116,22 @@ public final class MainActivity extends Activity {
     }
 
     private void inspectRequest(String address, Map<String, String> headers) {
-        if (!delivered.get() && looksLikeVideo(address, headers)) deliver(address, headers);
+        if (delivered.get()) return;
+        String path = address.toLowerCase().split("\\?", 2)[0];
+        if (path.endsWith(".vtt") || path.endsWith(".srt") || path.endsWith(".ass")) {
+            if (subtitleUrl.isEmpty()) {
+                subtitleUrl = address;
+                subtitleHeaders = headers;
+            }
+            return;
+        }
+        if (looksLikeVideo(address, headers)) {
+            mediaUrl = address;
+            mediaHeaders = headers;
+            if (deliveryScheduled.compareAndSet(false, true)) {
+                webView.postDelayed(() -> deliver(mediaUrl, mediaHeaders, subtitleUrl, subtitleHeaders), 2500);
+            }
+        }
     }
 
     private boolean looksLikeVideo(String address, Map<String, String> headers) {
@@ -121,13 +142,15 @@ public final class MainActivity extends Activity {
         return range != null && !path.matches(".*\\.(jpg|jpeg|png|webp|gif|css|js|vtt|srt|ts|m4s)$");
     }
 
-    private void deliver(String address, Map<String, String> headers) {
+    private void deliver(String address, Map<String, String> headers, String subtitle, Map<String, String> subHeaders) {
+        if (address == null || address.isEmpty()) return;
         if (!delivered.compareAndSet(false, true)) return;
         new Thread(() -> {
             HttpURLConnection connection = null;
             try {
                 JSONObject payload = new JSONObject();
                 payload.put("url", address);
+                payload.put("subtitle", subtitle == null ? "" : subtitle);
                 JSONObject requestHeaders = new JSONObject();
                 if (headers != null) {
                     for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -141,6 +164,21 @@ public final class MainActivity extends Activity {
                 String cookie = CookieManager.getInstance().getCookie(address);
                 if (cookie != null && !cookie.isEmpty()) requestHeaders.put("Cookie", cookie);
                 payload.put("headers", requestHeaders);
+                JSONObject subtitleRequestHeaders = new JSONObject();
+                if (subHeaders != null) {
+                    for (Map.Entry<String, String> entry : subHeaders.entrySet()) {
+                        String key = entry.getKey();
+                        if (key.equalsIgnoreCase("user-agent") || key.equalsIgnoreCase("referer") || key.equalsIgnoreCase("origin"))
+                            subtitleRequestHeaders.put(key, entry.getValue());
+                    }
+                }
+                if (subtitle != null && !subtitle.isEmpty()) {
+                    if (!subtitleRequestHeaders.has("User-Agent")) subtitleRequestHeaders.put("User-Agent", userAgent);
+                    if (!subtitleRequestHeaders.has("Referer")) subtitleRequestHeaders.put("Referer", referer);
+                    String subtitleCookie = CookieManager.getInstance().getCookie(subtitle);
+                    if (subtitleCookie != null && !subtitleCookie.isEmpty()) subtitleRequestHeaders.put("Cookie", subtitleCookie);
+                }
+                payload.put("subtitle_headers", subtitleRequestHeaders);
                 connection = (HttpURLConnection) new URL(callback).openConnection();
                 connection.setRequestMethod("POST");
                 connection.setConnectTimeout(5000);

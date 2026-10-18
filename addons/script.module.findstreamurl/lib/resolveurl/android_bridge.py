@@ -14,6 +14,7 @@ HOST_DOMAINS = (
     'streamtape.com', 'strtape.cloud', 'streamtape.net', 'streamta.pe', 'streamtape.site',
     'strcloud.link', 'strtpe.link', 'streamtape.cc', 'scloud.online', 'stape.fun',
     'streamadblockplus.com', 'shavetape.cash', 'streamtape.to', 'streamta.site', 'streamadblocker.xyz',
+    'embedorigin.cc', 'content.st', 'bysefujedu.com',
 )
 VIDSRC_DOMAINS = ('vidsrc-embed.ru', 'vidsrc.me', 'vidsrc.sh', 'vidsrcme.ru')
 
@@ -54,7 +55,13 @@ class _CallbackHandler(BaseHTTPRequestHandler):
                 raise ValueError('Invalid media URL')
             if not isinstance(headers, dict):
                 headers = {}
-            self.server.result = (address, headers)
+            subtitle = payload.get('subtitle', '')
+            subtitle_headers = payload.get('subtitle_headers', {})
+            if not isinstance(subtitle, str):
+                subtitle = ''
+            if not isinstance(subtitle_headers, dict):
+                subtitle_headers = {}
+            self.server.result = (address, headers, subtitle, subtitle_headers)
             self.server.completed.set()
             self.send_response(200)
             self.send_header('Content-Length', '0')
@@ -92,10 +99,14 @@ def resolve(url, timeout=180):
                 raise ValueError('Зареждането на видеоизточника е отказано.')
         if not server.result:
             raise ValueError('Не получих видеоадрес от помощника. Провери дали MyVidPlay Bridge е инсталиран и дали страницата е заредила видеото.')
-        address, headers = server.result
+        address, headers, subtitle, subtitle_headers = server.result
         safe_headers = {str(k): str(v) for k, v in headers.items()
                         if str(k).lower() in ('user-agent', 'referer', 'origin', 'cookie')}
-        return address + ('|' + urlencode(safe_headers) if safe_headers else ''), ''
+        safe_subtitle_headers = {str(k): str(v) for k, v in subtitle_headers.items()
+                                 if str(k).lower() in ('user-agent', 'referer', 'origin', 'cookie')}
+        video = address + ('|' + urlencode(safe_headers) if safe_headers else '')
+        track = subtitle + ('|' + urlencode(safe_subtitle_headers) if safe_subtitle_headers else '')
+        return video, track
     finally:
         progress.close()
         server.server_close()

@@ -44,6 +44,11 @@ def search_history(media_type):
         return []
 
 
+def enabled_sources():
+    return [source for string_id, addon_id, name in SOURCES
+            if ADDON.getSetting('source_' + addon_id.replace('.', '_')) != 'false']
+
+
 def _read_history_data():
     try:
         with open(HISTORY_PATH, 'r', encoding='utf-8') as history_file:
@@ -93,7 +98,12 @@ def show_search_results(query, media_type='movie', only_source=None, page_url=''
     progress.create(ADDON.getLocalizedString(title_id), ADDON.getLocalizedString(30009))
     found = {}
     errors = {}
-    sources = [source for source in SOURCES if not only_source or source[1] == only_source]
+    sources = [source for source in enabled_sources() if not only_source or source[1] == only_source]
+    if not sources:
+        progress.close()
+        xbmcgui.Dialog().ok(ADDON.getLocalizedString(title_id), ADDON.getLocalizedString(30020))
+        xbmcplugin.endOfDirectory(HANDLE, succeeded=True, cacheToDisc=False)
+        return
     with ThreadPoolExecutor(max_workers=max(1, len(sources))) as pool:
         futures = {
             pool.submit(search_sources, addon_id, query, USER_AGENT, media_type, page_url if only_source == addon_id else ''): addon_id
@@ -231,7 +241,7 @@ def main():
         search_item.setArt({'icon': ADDON.getAddonInfo('icon'), 'thumb': ADDON.getAddonInfo('icon')})
         target = 'plugin://%s/?%s' % (ADDON_ID, urlencode({'action': 'search', 'type': media_type}))
         xbmcplugin.addDirectoryItem(HANDLE, target, search_item, isFolder=True)
-    for string_id, addon_id, name in SOURCES:
+    for string_id, addon_id, name in enabled_sources():
         target = 'plugin://%s/' % addon_id
         item = xbmcgui.ListItem(label=ADDON.getLocalizedString(int(string_id)))
         icon = 'special://home/addons/%s/resources/icon.png' % addon_id

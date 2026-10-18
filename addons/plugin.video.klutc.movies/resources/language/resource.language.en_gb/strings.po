@@ -41,7 +41,7 @@ msgid "No matching titles were found."
 msgstr ""
 
 msgctxt "#30009"
-msgid "Searching all four sites…"
+msgid "Searching enabled sites…"
 msgstr ""
 
 msgctxt "#30010"
@@ -68,3 +68,27 @@ msgstr ""
 msgctxt "#30015"
 msgid "Filmi2K"
 msgstr "Filmi2K"
+
+msgctxt "#30016"
+msgid "Search sources"
+msgstr "Search sources"
+
+msgctxt "#30017"
+msgid "Search FilmiZip"
+msgstr "Search FilmiZip"
+
+msgctxt "#30018"
+msgid "Search Filmi9"
+msgstr "Search Filmi9"
+
+msgctxt "#30019"
+msgid "Search ZenoPlay"
+msgstr "Search ZenoPlay"
+
+msgctxt "#30020"
+msgid "All search sources are disabled. Enable at least one in the add-on settings."
+msgstr "All search sources are disabled. Enable at least one in the add-on settings."
+
+msgctxt "#30021"
+msgid "Include this site in Klutc Movies search and the home menu."
+msgstr "Include this site in Klutc Movies search and the home menu."

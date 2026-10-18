@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings version="1">
+  <section id="plugin.video.klutc.movies">
+    <category id="sources" label="30016">
+      <group id="1">
+        <setting id="source_plugin_video_filmizip" type="boolean" label="30017" help="30021">
+          <level>0</level><default>true</default><control type="toggle" />
+        </setting>
+        <setting id="source_plugin_video_filmi9" type="boolean" label="30018" help="30021">
+          <level>0</level><default>true</default><control type="toggle" />
+        </setting>
+        <setting id="source_plugin_video_zenoplay" type="boolean" label="30019" help="30021">
+          <level>0</level><default>true</default><control type="toggle" />
+        </setting>
+        <setting id="source_plugin_video_filmi2k" type="boolean" label="30015" help="30021">
+          <level>0</level><default>true</default><control type="toggle" />
+        </setting>
+      </group>
+    </category>
+  </section>
+</settings>

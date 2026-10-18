@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<addon id="plugin.video.filmi9" name="Filmi9 by Klutc" version="1.2.15" provider-name="Klutc">
+<addon id="plugin.video.filmi9" name="Filmi9 by Klutc" version="1.2.16" provider-name="Klutc">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.requests" version="1.1.0" />

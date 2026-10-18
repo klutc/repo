@@ -390,7 +390,9 @@ except Exception as error:
 finally:
     if action not in ('play', 'info'):
         xbmcplugin.endOfDirectory(HANDLE, succeeded=DIRECTORY_OK)
-        if action == 'search':
+        if action in ('home', 'search') and xbmc.getSkinDir() == 'skin.confluence':
+            # Kodi may carry the last category's thumbnail view to this menu.
+            xbmc.sleep(100)
             xbmc.executebuiltin('Container.SetViewMode(50)')
         elif THUMBNAILS and xbmc.getSkinDir() == 'skin.confluence':
             # Let Kodi finish switching to the new container before selecting

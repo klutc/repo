@@ -236,6 +236,10 @@ def main():
         item.setProperty('IsPlayable', 'false')
         xbmcplugin.addDirectoryItem(HANDLE, target, item, isFolder=True)
     xbmcplugin.endOfDirectory(HANDLE, cacheToDisc=True)
+    if xbmc.getSkinDir() == 'skin.confluence':
+        # Keep the hub menu in List even after returning from a thumbnail view.
+        xbmc.sleep(100)
+        xbmc.executebuiltin('Container.SetViewMode(50)')
 
 
 if __name__ == '__main__':

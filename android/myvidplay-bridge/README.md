@@ -10,6 +10,6 @@ Build with Android SDK platform 30, Build Tools 30.0.2, Android Gradle Plugin 4.
 gradle assembleDebug
 ```
 
-Install `releases/MyVidPlayBridge-0.2.0.apk` on the Android TV or phone. Package: `org.klutc.myvidplaybridge`. Filmi2K 1.0.4 will launch it automatically for MyVidPlay/PlayMogo links on Android. On Android TV, press OK to tap the center of the WebView (where the player button usually appears). Install this APK over version 0.1.0 before using the Kodi add-on. The target SDK is 24 so Android 14 and newer permit installation.
+Install `releases/MyVidPlayBridge-0.2.1.apk` on the Android TV or phone. Package: `org.klutc.myvidplaybridge`. Filmi2K 1.0.4 will launch it automatically for MyVidPlay/PlayMogo links on Android. On Android TV, press OK to tap the center of the WebView (where the player button usually appears). Install this APK over version 0.1.0 or 0.2.0 before using the Kodi add-on. The target SDK is 24 so Android 14 and newer permit installation.
 
 This prototype only captures direct media URLs exposed to WebView. It cannot return `blob:` playback, DRM streams, or URLs that are cryptographically tied to the browser process. An Android TV device is required to verify the provider's current player behavior end to end.

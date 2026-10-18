@@ -96,6 +96,8 @@ def add(name, action, url='', icon='', plot='', year=0, genres=None, fanart='', 
     params.update(extra)
     year=movie_year(dict(name=name,year=year,originaltitle=originaltitle))
     display=source_label(name,year,source_name) if action=='play' else movie_label(name,year) if action=='detail' else name
+    if action == 'detail' and extra.get('bg_audio'):
+        display = '[BG] ' + display
     item = xbmcgui.ListItem(label=display)
     fill_info(item,dict(name=name,icon=icon,plot=plot,year=year,genres=genres or [],fanart=fanart,duration=duration,originaltitle=originaltitle,imdb=imdb,rating=rating,media_type=media_type))
     if action == 'play':

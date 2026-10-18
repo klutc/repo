@@ -78,9 +78,14 @@ def _card(article, page_url):
 def listing(html, url):
     soup = _soup(html)
     items, seen = [], set()
+    # Some archive pages communicate the category through the page URL rather
+    # than a badge on each individual card.
+    bg_audio_category = urlsplit(url).path.rstrip('/').lower() == '/tag/filmi-bg-audio'
     for article in soup.select('article'):
         row = _card(article, url)
         if row and row['url'] not in seen:
+            if bg_audio_category:
+                row['bg_audio'] = True
             seen.add(row['url'])
             items.append(row)
     next_anchor = soup.select_one('.pagination a.next, .pagination a[rel="next"], a.next.page-numbers, a[rel="next"]')

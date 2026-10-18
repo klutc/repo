@@ -203,12 +203,15 @@ def main():
                     'action': 'search_query', 'type': media_type, 'query': query,
                 }))
                 # Keep a stable search_query URL in Kodi's directory history.
-                # Otherwise Kodi can reopen search_new after playback and show
-                # the keyboard prompt again when returning to this listing.
-                xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
-                xbmc.executebuiltin('Container.Update(%s,replace)' % results_url)
+                # Schedule the navigation after this plugin request has ended;
+                # Container.Update called here races Kodi's directory callback
+                # and can be discarded as "updating in progress".
+                xbmcplugin.endOfDirectory(HANDLE, succeeded=True, cacheToDisc=False)
+                xbmc.executebuiltin(
+                    'AlarmClock(KlutMoviesSearch,Container.Update(%s,replace),00:00:01,silent)' % results_url
+                )
             else:
-                xbmcplugin.endOfDirectory(HANDLE, succeeded=False)
+                xbmcplugin.endOfDirectory(HANDLE, succeeded=True, cacheToDisc=False)
             return
         else:
             query = params.get('query', '').strip()

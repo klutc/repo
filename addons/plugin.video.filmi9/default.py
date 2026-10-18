@@ -315,6 +315,9 @@ finally:
         if action == 'search':
             xbmc.executebuiltin('Container.SetViewMode(50)')
         elif THUMBNAILS and xbmc.getSkinDir() == 'skin.confluence':
+            # Let Kodi finish switching to the new container before selecting
+            # its view; otherwise the command can affect the previous folder.
+            xbmc.sleep(100)
             xbmc.executebuiltin('Container.SetViewMode(500)')
         if AUTO_PLAY_URL and DIRECTORY_OK:
             xbmc.executebuiltin('PlayMedia(' + AUTO_PLAY_URL + ')')

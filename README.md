@@ -25,7 +25,7 @@ Workflow-ът Build and publish Kodi repository генерира каталог�
 | FilmiZip by Klutc | 1.3.18 |
 | Filmi2K by Klutc | 1.0.5 |
 | ZenoPlay by Klutc | 1.0.19 |
-| Klutc Movies (общ вход и търсене) | 1.2.13 |
+| Klutc Movies (общ вход и търсене) | 1.2.14 |
 | Find Stream URL (зависимост) | 2026.10.19.01 |
 | ElementumOrg repository | 0.0.7 |
 

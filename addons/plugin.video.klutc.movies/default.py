@@ -45,7 +45,7 @@ def search_history(media_type):
 
 
 def enabled_sources():
-    return [source for string_id, addon_id, name in SOURCES
+    return [(string_id, addon_id, name) for string_id, addon_id, name in SOURCES
             if ADDON.getSetting('source_' + addon_id.replace('.', '_')) != 'false']
 
 

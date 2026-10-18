@@ -76,13 +76,30 @@ def metadata(html, url):
                 fanart=urljoin(url,backdrop[1]) if backdrop else '',
                 duration=int(duration[1])*60 if duration else 0)
 
+def source_priority(name):
+    label=str(name or '').strip().lower()
+    if 'vidme' in label:return 0
+    if label.startswith('fmoon') or 'filemoon' in label:return 9
+    return 1
+
+
+def ordered_sources(source_ids, names):
+    pairs=[(source,name) for source,name in zip(source_ids,names) if source]
+    return [row for _,row in sorted(enumerate(pairs),key=lambda item:(source_priority(item[1][1]),item[0]))]
+
+
 def detail(html, url):
     soup = BeautifulSoup(html, 'html.parser')
     plot = soup.select_one('.page__text')
     image = soup.select_one('.pmovie__poster img')
     sources = [(a['data-link'], a.get_text(strip=True)) for a in soup.select('.pmovie__player-controls [data-link]')]
-    episodes = [(a['data-tv_link'], a.get('data-source', '').split(','), a.get('data-abr', '').split(','))
-                for a in soup.select('[data-tv_link]') if 'disabled' not in a.get('class', [])]
+    sources.sort(key=lambda row:source_priority(row[1]))
+    episodes=[]
+    for a in soup.select('[data-tv_link]'):
+        if 'disabled' in a.get('class',[]):continue
+        source_ids=a.get('data-source','').split(',');names=a.get('data-abr','').split(',')
+        pairs=ordered_sources(source_ids,names)
+        episodes.append((a['data-tv_link'],[row[0] for row in pairs],[row[1] for row in pairs]))
     news = re.search(r'/(\d+)-', url)
     token = re.search(r"dle_login_hash\s*=\s*['\"]([^'\"]+)", html)
     if not news or not token:

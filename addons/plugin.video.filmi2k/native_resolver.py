@@ -102,6 +102,19 @@ def vidmoly(session,url,referer):
 def resolve(session,url,referer,progress=None,cache_directory='',prefer_mp4=False):
     host=(urlsplit(url).hostname or '').lower()
     if host.startswith('www.'):host=host[4:]
+    if host in ('myvidplay.com','playmogo.com'):
+        # MyVidPlay is a DoodStream embed alias. Resolve it explicitly instead
+        # of letting ResolveURL's catch-all ReelTube resolver inspect it; the
+        # generic resolver order can differ between Kodi platforms.
+        match=re.search(r'/(?:e|d)/([0-9a-zA-Z]+)(?:/|$)',urlsplit(url).path)
+        if not match:raise ValueError('MyVidPlay връзката няма валиден идентификатор.')
+        try:
+            from resolveurl.plugins.doodstream import DoodStreamResolver
+            result=DoodStreamResolver().get_media_url(host,match[1],subs=True)
+        except Exception as error:
+            raise ValueError('MyVidPlay/DoodStream не успя да зареди видеото: '+str(error)) from error
+        if not result or not result[0]:raise ValueError('MyVidPlay/DoodStream не върна видео адрес.')
+        return result
     if host=='voe.sx' or host.startswith('voe-unblock.'):return voe(session,url,referer,prefer_mp4=prefer_mp4)
     if host in ('vidmoly.biz','vidmoly.me','vidmoly.to','vidmoly.net'):return vidmoly(session,url,referer)
     if host in ('vsembed.su','vsembed.ru','vsembed.com'):

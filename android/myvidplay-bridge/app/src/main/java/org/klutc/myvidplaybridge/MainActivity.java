@@ -90,6 +90,7 @@ public final class MainActivity extends Activity {
             String host = uri.getHost();
             if (!"https".equalsIgnoreCase(uri.getScheme()) || host == null) return false;
             host = host.toLowerCase();
+            if (host.equals("filmizip.com") && "/player.html".equals(uri.getPath())) return true;
             String[] domains = {
                     "myvidplay.com", "playmogo.com", "upbolt.to", "upbolt.com",
                     "streamtape.com", "strtape.cloud", "streamtape.net", "streamta.pe", "streamtape.site",

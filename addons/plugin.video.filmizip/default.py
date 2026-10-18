@@ -210,7 +210,9 @@ def play(p):
     try:
         try:
             if xbmc.getCondVisibility('System.Platform.Android') and android_bridge.supports_url(host):
-                result = android_bridge.resolve(host)
+                # Keep the site player as the top-level origin. Providers such
+                # as Byse/FileMoon reject direct WebView opens without it.
+                result = android_bridge.resolve(wrapper)
             elif urlsplit(host).hostname in ('playmate.to', 'www.playmate.to'):
                 result = hosts.playmate(SESSION, host)
             else:

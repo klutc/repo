@@ -3,7 +3,10 @@ package org.klutc.myvidplaybridge;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
@@ -43,7 +46,7 @@ public final class MainActivity extends Activity {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setBackgroundColor(Color.BLACK);
         TextView hint = new TextView(this);
-        hint.setText("MyVidPlay: ако се появи проверка, изпълни я и натисни Play. Връщането към Kodi става автоматично.");
+        hint.setText("MyVidPlay: натисни OK върху Play в средата на екрана. Ако се появи проверка, изпълни я. Връщането към Kodi става автоматично.");
         hint.setTextColor(Color.WHITE);
         hint.setTextSize(16);
         hint.setPadding(20, 14, 20, 14);
@@ -146,6 +149,28 @@ public final class MainActivity extends Activity {
                 if (connection != null) connection.disconnect();
             }
         }, "myvidplay-kodi-callback").start();
+    }
+
+    @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if ((keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER ||
+                keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) && event.getRepeatCount() == 0 && webView != null) {
+            tapWebViewCenter();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private void tapWebViewCenter() {
+        float x = webView.getWidth() / 2f;
+        float y = webView.getHeight() / 2f;
+        long downTime = SystemClock.uptimeMillis();
+        MotionEvent down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, 0);
+        webView.dispatchTouchEvent(down);
+        down.recycle();
+        long upTime = SystemClock.uptimeMillis();
+        MotionEvent up = MotionEvent.obtain(downTime, upTime, MotionEvent.ACTION_UP, x, y, 0);
+        webView.dispatchTouchEvent(up);
+        up.recycle();
     }
 
     @Override public void onBackPressed() {
